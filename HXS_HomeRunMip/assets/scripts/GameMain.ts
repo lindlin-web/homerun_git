@@ -5,15 +5,8 @@ import { GameManager } from './GameManager';
 const { ccclass, property } = _decorator;
 
 
-export const CodeHeight:number = 0.25;
-export enum CodeDirection {
-    Up,
-    LeftUp,
-    LeftDown,
-    Down,
-    RightDown,
-    RightUp
-}
+
+
 @ccclass('GameMain')
 export class GameMain extends Component {
 
@@ -41,8 +34,9 @@ export class GameMain extends Component {
     private columnNum:number = 10;
     private theMinimumGap:number = 0.15;                // 检测的最小的偏差是多少...
 
-    private theCodeValue:number[][][] = [];
-    private theCodePrefab:Node[][][] = [];              // 持有每个prefab Node 的引用...
+
+
+    public theCodePrefab:Node[][][] = [];              // 持有每个prefab Node 的引用...
     private baseCodeNode:Node[][] = [];
 
     private isChooseOn:boolean = false;
@@ -59,20 +53,20 @@ export class GameMain extends Component {
 
     private manager:GameManager = null;         // 游戏的管理类...
 
+    private pushNodeInitWorldPosition:Vec3 = new Vec3(0, 0, 0);         // 推的位置的初始化位置....
+
     @property({type:Node})
     testNode:Node;
     start() {
         this.manager = new GameManager();
+        this.manager.init(this);
         this.theTempNode.setParent(this.gameMain);
-        this.theCodeValue = [];
         this.baseCodeNode = [];
         this.theCodePrefab = [];
         for(let i = 0; i < this.rowNum; i++) {
-            this.theCodeValue[i] = [];
             this.baseCodeNode[i] = [];
             this.theCodePrefab[i] = [];
             for(let j = 0; j < this.columnNum; j++) {
-                this.theCodeValue[i][j] = [];
                 this.theCodePrefab[i][j] = [];
                 let discNode = instantiate(this.discCode);
                 this.baseCodeNode[i][j] = discNode;
@@ -85,25 +79,26 @@ export class GameMain extends Component {
 
                 let firstVisible = Math.random() > 0.9 ? true: false;       // 头部有一定的概率不要叠.... 
                 if(!firstVisible && i == 0) {
+                    this.manager.setChips(i, j,[]);
                     continue;
                 }
                 if(i == 1) {
-                    let len = this.theCodeValue[i-1][j].length;
-                    if(len == 0) {
+                    let arr = this.manager.getChips(i-1,j);
+                    if(arr && arr.length == 0) {
                         let secondVisible = Math.random() > 0.3? true: false;       // 头部有一定的概率不要叠.... 
                         if(!secondVisible) {
+                            this.manager.setChips(i, j,[]);
                             continue;
                         }
                     }
                 }
-                var discCount = Math.floor(Math.random() * 6) + 5;          // 5 - 10 个之间的碟码
 
-                this.createArr = this.createRandomIndexByCount(discCount);
-                for(let z = 0; z < this.createArr.length; z++) {
-                    this.theCodeValue[i][j][z] = this.createArr[z];
-                    let index = this.createArr[z];
+                let createArr = this.manager.createChips(i, j);
+                for(let z = 0; z < createArr.length; z++) {
+                    let index = createArr[z];
                     let pref = instantiate(this.prefabs[index]);
                     this.theCodePrefab[i][j][z] = pref;                 // 获取筹码的引用指针...
+                    pref.getComponent(ColorCode).setColor(index);
                     let temp = new Vec3();
                     discNode.getPosition(temp);
                     pref.setPosition(temp.x, temp.y + 0.25 * (z + 1), temp.z);
@@ -112,17 +107,16 @@ export class GameMain extends Component {
             }
         }
 
-        this.manager.init(this.theCodeValue, this.theCodePrefab);
+        this.manager.createGroups();            // 创建那个堆...
 
 
-        var discCount = Math.floor(Math.random() * 6) + 5;          // 5 - 10 个之间的碟码
-        let pushArr = this.createRandomIndexByCount(discCount);
-        for(let i = 0; i < pushArr.length; i++) {
-            let index = pushArr[i];
+        let holdChips = this.manager.createHoldChips();
+        for(let i = 0; i < holdChips.length; i++) {
+            let index = holdChips[i];
             let prefab = instantiate(this.prefabs[index]);
             let child = prefab.getChildByName("HXS_FK_1");
+            prefab.getComponent(ColorCode).setColor(index);
             child.addComponent(BoxCollider);
-            let temp = new Vec3();
             prefab.setPosition(0, 0.25 * (i + 1), 0);
             this.pushNode.getChildByName("dog").addChild(prefab);
         }
@@ -176,11 +170,11 @@ export class GameMain extends Component {
                 this.isChooseOn = false;
                 this.attachBoxColliderForChildren(this.isChooseOn);    
             }
-
             if(this.thePreChooseBase) {
                 this.pushTheCode();
+                this.thePreChooseBase.getComponent(BaseCode).setBaseActive(false);
+                this.thePreChooseBase = null;
             }
-            
         });
     }
 
@@ -199,6 +193,7 @@ export class GameMain extends Component {
 
         let targetPos = this.thePreChooseBase.getWorldPosition();
         let time =Math.abs(targetPos.z - dogWorldPosition.z) / this.moveSpeed;
+        console.log("================我看看这个地方，会执行多少次==================1111111111");
         tween(this.theTempNode)
             .to(time,{worldPosition:targetPos}).call(()=>{
                 let children = this.theTempNode.children;
@@ -211,17 +206,14 @@ export class GameMain extends Component {
                     child.setWorldPosition(pos);
                     myChildren.push(child);
                 }
-                this.theCodeValue[this.tempI][this.tempJ] = this.createArr.slice();
-                console.log("================我看看这个地方，会执行多少次==================");
-                this.checkCover();
-                this.manager.setPushGroup(this.theCodeValue[this.tempI][this.tempJ],myChildren,this.tempI, this.tempJ);
+                this.manager.pushHoldChips(this.tempI, this.tempJ);
+                this.theCodePrefab[this.tempI][this.tempJ] = myChildren;                        // 获取到prefab...
+                console.log("================我看看这个地方，会执行多少次==================2222222");
+                this.manager.setPushGroup(this.tempI, this.tempJ);
             }).start();
     }
 
-    /** 看看是否有叠饼可以被合并起来 */
-    checkCover() {
-
-    }
+    
 
     public attachBoxColliderForChildren(bo) {
         bo = !bo;
@@ -239,7 +231,6 @@ export class GameMain extends Component {
     }
 
     public getMostCorrectPosition(testWorldPos:Vec3) {
-
         let retVal = [-1,-1];       // 二位数组， 0, 横坐标, 1 s
         let longDistance = 0.0;
         for(let i = 0; i < this.baseCodeNode.length; i++) {
@@ -248,7 +239,7 @@ export class GameMain extends Component {
                 let baseNode = arr[j];
                 let baseWorld = baseNode.getWorldPosition();
                 let gap = Math.abs(baseWorld.x - testWorldPos.x);
-                let theArrValue = this.theCodeValue[i][j];
+                let theArrValue = this.manager.getChips(i, j);
                 if(gap < this.theMinimumGap && theArrValue && theArrValue.length == 0) {
                     let sub = testWorldPos.clone().subtract(baseWorld);
                     let distance = sub.length();
@@ -257,35 +248,6 @@ export class GameMain extends Component {
                         retVal[0] = i;
                         retVal[1] = j;
                     }
-                }
-            }
-        }
-        return retVal;
-    }
-
-
-
-    // 靠 disCount生成碟饼
-    public createRandomIndexByCount(disCount:number):number[] {
-        let retVal:number[] = [];            // 返回一个都是数组的
-        // 确定下来,需要一个颜色，还是需要两个颜色的碟码...
-        var randomValue = Math.random() > 0.5 ? 1 : 2;                  // 是一种颜色，还是两种颜色.
-        var discCount = Math.floor(Math.random() * 6) + 5;          // 5 - 10 个之间的碟码
-        var gap = Math.floor(Math.random() * discCount) + 1;        // 1 - discount之间
-        var decideColor = [];
-        var randomColor = Math.floor(Math.random() * 3.99);
-        decideColor.push(randomColor);
-        var randomColor2 = (randomColor + 1) % 4;
-        decideColor.push(randomColor2);
-        for(let m = 0; m < discCount; m++) {
-            if(randomValue == 1) {
-                retVal.push(decideColor[0]);
-            }
-            else {
-                if(m < gap) {
-                    retVal.push(decideColor[0]);
-                } else {
-                    retVal.push(decideColor[1]);
                 }
             }
         }

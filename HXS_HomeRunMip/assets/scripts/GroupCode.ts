@@ -1,25 +1,125 @@
 import { _decorator, Component, Node } from 'cc';
+import { AppNotify, NotifyMgrCls } from './controller/AppNotify';
+import { ChipColor, DELETECOUNT } from './data/MyTableData';
+import { ColorCode } from './ColorCode';
 const { ccclass, property } = _decorator;
 
 @ccclass('GroupCode')
 export class GroupCode extends Component {
     private codes:Node[] = [];
-    private values:number[] = [];
 
     private row:number = 0;                 // 这个组 ，所在的行
     private column:number = 0;              // 这个组 ，所在的列
 
     private isPush:boolean = false;         // 是否是推送过来的那个 堆.  是推送过来的堆， 就会从别的堆 叠到 自己的 身上
 
-    private isCanEffect:boolean = false;    // 是否是可影响的堆，如果可以影响，那么周边的堆，就会被判断如果有同一个颜色，就会被叠起来....
+    private isCheckToDelete:boolean = false;    // 这个堆，是否是可以被满10, 就删除...
 
     private isLock:boolean = false;       // 被锁定了.
 
-    public init(codes,values, row, column) {
+    private listenRow:number = -1;          // 监听,某个堆的动画，是否已经完成了...
+    private listenColumn:number = -1;       // 监听,某个堆的动画，是否已经完成了...
+
+    public init(codes,row, column) {
         this.codes = codes;
-        this.values = values;
         this.row = row;
         this.column = column;
+    }
+
+    /** 从背后删除相应数量的对应color的chip */
+    public deleteNumColorFromTail(color:ChipColor, num:number) {
+        let retVal:Node[] = [];
+        for(let i = this.codes.length - 1; i >= 0; i--) {
+            let chip = this.codes[i];
+            let colorColor:ChipColor = chip.getComponent(ColorCode).getColor();
+            if(colorColor == color) {
+                let chipNode = this.codes.splice(i, 1)[0];
+                retVal.push(chipNode);
+            } else {
+                break;
+            }
+        }
+        if(retVal.length != num) {
+            console.error(" 删除的数量都不相等，肯定是有问题的了");
+        }
+        return retVal;
+    }
+
+    public addNumColorToTail(array:Node[]) {
+        for(let i = 0; i < array.length; i++) {
+            let node = array[i];
+            this.codes.push(node);
+        }
+    }
+
+    /** ==========从尾巴节点做删除的操作========== */
+    public doDeleteThing() {
+        if(!this.codes) {
+            console.error("=========堆不存在codes的数据,出错==========");
+            return;
+        }
+        if(this.codes.length < DELETECOUNT) {
+            console.error("=======没有达到要删除的指标，出错==============");
+            return;
+        }
+
+        var over = false;
+        let value:ChipColor = this.codes[this.codes.length - 1].getComponent(ColorCode).getColor();
+        let total = this.codes.length - 1;
+        var currentIndex = 0;
+        for(var i = this.codes.length - 1; i>=0; i--) {
+            let nextNode = this.codes[i-1];
+            currentIndex = i;
+            if(!nextNode || nextNode.getComponent(ColorCode).getColor() != value) {
+                over = true;
+            }
+            this.scheduleOnce(this.deleteChip.bind(this,currentIndex,over),0.06 * (total - i));
+            if(over) {
+                break;
+            }
+        }
+    }
+
+    /** 删除某一个碟片 */
+    private deleteChip(index:number, isOver:boolean) {
+        console.log(index, "==============这个是我要删除的index");
+        let chip = this.codes[index];
+        chip.removeFromParent();
+        chip.destroy();
+        this.codes.splice(index, 1);
+        if(isOver) {
+            // 发送一个事件,
+            this.isCheckToDelete = false;       // 如果已经删除完毕了。就可以解锁了..
+            this.isLock = false;                // 如果已经删除完毕了，就可以解锁了..
+            NotifyMgrCls.getInstance().send(AppNotify.DeleteDone);
+        }
+    }
+
+    public listenToFlyAnimationDone(listenRow:number, listenColumn:number) {
+        this.listenRow = listenRow;
+        this.listenColumn = listenColumn;
+        NotifyMgrCls.getInstance().observe(AppNotify.FlyAnimationDone, this.onAnimationDone.bind(this));
+    }
+
+    public onAnimationDone(row:number, column:number) {
+        if(row == this.listenRow && column == this.listenColumn) {
+            NotifyMgrCls.getInstance().off(AppNotify.FlyAnimationDone, this.onAnimationDone.bind(this));        // 关闭监听...
+            // 这个只是，飘动的动画已经完成了，还要确认是否可以删除...
+            if(this.isCheckToDelete) {
+                // 如果要被检查，是否要删除，暂时先不要解锁...
+            } else {
+                this.isLock = false;
+            }
+        }
+    }
+
+    public setCheckToDelete(bo) {
+        this.isCheckToDelete = bo;
+    }
+
+    /** 获得，是否可以被删除... */
+    public getChechToDelete():boolean {
+        return this.isCheckToDelete;
     }
 
     /** 获得最后一个的节点 */
@@ -32,31 +132,7 @@ export class GroupCode extends Component {
         return this.codes[this.codes.length - 1 - index];
     }
 
-    /** 获得，筹码，从上到下，相同的数量是多少个... */
-    public getTailNum():number {
-        if(!this.values) {
-            return 0;
-        }
-        if(this.values.length < 1) {
-            return 0;
-        }
-        let tail = this.values[this.values.length - 1];
-        let retVal= 0;
-        for(let i = this.values.length - 1; i >= 0; i--) {
-            let val = this.values[i];
-            if(tail == val) {
-                retVal ++;
-            } else {
-                break;
-            }
-        }
-        return retVal;
-    }
-
-    public getValues():number[] {
-        return this.values;
-    }
-
+    
     /** 是否是推动过来的那个堆 */
     public setIsPush(bo:boolean) {
         this.isPush = bo;
@@ -65,11 +141,6 @@ export class GroupCode extends Component {
     /** 是否是推送过来的那个 */
     public getIsPush() {
         return this.isPush;
-    }
-
-    /** 是否可以被影响到 */
-    public setIsCanEffect(bo:boolean) {
-        this.isCanEffect = bo;
     }
 
     /** 判断是否是被锁定了，被锁定就不能被影响... */

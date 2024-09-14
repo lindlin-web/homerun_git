@@ -4,10 +4,10 @@
     "customSplash": {
       "id": "customSplash",
       "label": "customSplash",
-      "enable": true,
+      "enable": false,
       "customSplash": {
-        "complete": true,
-        "form": "https://creator-api.cocos.com/api/form/show?sid=120a2bad6753f20d734ca827c0f968cf"
+        "complete": false,
+        "form": "https://creator-api.cocos.com/api/form/show?"
       }
     }
   }

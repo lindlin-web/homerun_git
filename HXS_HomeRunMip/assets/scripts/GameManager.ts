@@ -1,28 +1,130 @@
 import { _decorator, Component, Node, Vec2, Vec3 } from 'cc';
 import { GroupCode } from './GroupCode';
 import { ColorCode } from './ColorCode';
-import { CodeDirection, CodeHeight } from './GameMain';
+import {GameMain } from './GameMain';
+import { AppNotify, NotifyMgrCls } from './controller/AppNotify';
+import { ChipColor, CodeDirection, CodeHeight, doubleColumn, MyTableData, singleColumn } from './data/MyTableData';
 const { ccclass, property } = _decorator;
 
 @ccclass('GameManager')
 export class GameManager extends Component {
     private groups:GroupCode[][] = [];             // 每一堆的节点是什么
 
-    // 四周的堆....
-    private processMasks:number[][] = [[1,0],[-1,0],[0,1],[0,-1],[-1,1],[-1,-1]];
+    
 
     private onProcessingGroup:GroupCode[] = [];     // 就是那些正在被处理的那些堆...
 
-    public init(values:number[][][], nodes:Node[][][]) {
-        for(let i = 0; i < values.length; i++) {
+    private gameMainRef:GameMain = null;            // 获取一个主界面的引用...
+
+    private myTableData:MyTableData = null;
+    public init(gameMain:GameMain) {
+        this.gameMainRef = gameMain;
+        this.myTableData = new MyTableData();
+        this.myTableData.init();
+        NotifyMgrCls.getInstance().observe(AppNotify.FlyAnimationDone, this.onAnimationDone.bind(this));
+        NotifyMgrCls.getInstance().observe(AppNotify.DeleteDone, this.onDeleteDone.bind(this));
+    }
+
+    /** 当删除完毕的时候 */
+    private onDeleteDone() {
+        this.scheduleOnce(this.check.bind(this),0.1);
+        console.log("我是否已经做好了删除的工作的呢");
+    }
+
+    public createGroups() {
+        let nodes:Node[][][] = this.gameMainRef.theCodePrefab;          // 直接操作gameMain好了。
+        let tableData = this.myTableData.getTableData();
+        for(let i = 0; i < tableData.length; i++) {
             this.groups[i] = [];
-            let row = values[i];
-            for(let j = 0; j < row.length; j++) {
-                let groupValue = row[j];
+            let columns = tableData[i];
+            for(let j = 0; j < columns.length; j++) {
                 let group = new GroupCode();
-                group.init(nodes[i][j], groupValue,i, j);
+                group.init(nodes[i][j],i, j);
                 this.groups[i][j] = group;
             }
+        }
+    }
+
+    /** 把手持的那个chips推到堆里面去 */
+    public pushHoldChips(row:number, column:number) {
+        this.myTableData.pushHoldChips(row, column);
+    }
+
+
+    /** 生成用来移动的那些chips */
+
+    public createHoldChips() {
+        let arr = this.myTableData.createHoldChips();
+        return arr;
+    }
+    /** 创建某一个墩子的chips */
+    public createChips(row:number, column:number) {
+        let array = this.myTableData.createChipsData(row, column);
+        return array;       // 创建的筹码 堆，给返回...
+    }
+
+    /** 获得某一个墩子的 chips的数据 */
+    public getChips(row:number, column:number) {
+        let chips = this.myTableData.getChips(row, column);
+        return chips;
+    }
+
+    public setChips(row:number,column:number,arr:number[]) {
+        this.myTableData.setChips(row,column, arr);
+    }
+
+    public onAnimationDone(Row:number,Colum:number) {
+        // onProcessingGroup 在这个 操作过的节点上，进行，看看，是否有可以被删除的，记住，Group有 checkToDelete的标志....
+
+        // 之前的动作，只是，表现上的动作，需要移动对应的group，更新对应的value....
+        // 备忘录上面，有 之前移动过的信息的信息...可以被获取到....
+        let note = this.myTableData.getNoteDataByFromRow_Column(Row, Colum);
+        let fromRow = note.fromRow;
+        let fromColumn = note.fromColum;
+        let toRow = note.toRow;
+        let toColumn = note.toColumn;
+        let color = note.color;
+        let num = note.num;
+
+        // ------------------------begin 移动对应的 Node到 对应的group -----------------------------
+        let fromGroup:GroupCode = this.getGroup(fromRow, fromColumn);
+        fromGroup.setLock(false);
+        let deleteNodeArray:Node[] = fromGroup.deleteNumColorFromTail(color, num);
+        let toGroup:GroupCode = this.getGroup(toRow, toColumn);
+        toGroup.addNumColorToTail(deleteNodeArray);
+        // ------------------------end  移动对应的 Node到 对应的group -----------------------------
+        
+        // -----------------------begin 做数据的移动----------------------------------------------
+        this.myTableData.deleteNumColorFromTail(fromRow,fromColumn,color,num);
+        this.myTableData.addNumColorToTail(toRow, toColumn, color, num);
+        // -----------------------end 做数据的移动----------------------------------------------
+
+        // -----------------------when done  delete the note data -------------------------------
+        this.myTableData.deleteNoteDataByRow_Column(Row, Colum);
+        // ---------------------------------------------------------------------------------------
+
+
+        this.checkCanBeDelete(toRow,toColumn);
+    }
+
+    /** 一个堆从尾巴被删除掉 */
+    private doGroupDeleteThing(row:number, column:number) {
+        let group = this.getGroup(row, column);     // 获得这个堆.....
+        group.doDeleteThing();
+    }
+
+    /** processingNode中检查，是否有可以删除的 */
+    public checkCanBeDelete(row:number, column:number) {
+        let canBeDeleted = this.myTableData.checkCanbeDelete(row, column);
+        if(canBeDeleted) {
+            this.myTableData.doDeleteThing(row,column);
+            this.doGroupDeleteThing(row, column);
+        } else {
+            // 如果不能被删除, 把这个堆，解锁，修改delete状态.......
+            let group = this.getGroup(row, column);
+            group.setCheckToDelete(false);
+            group.setLock(false);
+            this.check();
         }
     }
 
@@ -31,9 +133,10 @@ export class GameManager extends Component {
     }
 
     /** 推送过来的那些筹码， 刚刚开始的时候肯定是空的，所以，可以直接赋值进去 */
-    public setPushGroup(values:number[], nodes:Node[],i, j) {
+    public setPushGroup(i, j) {
+        let nodes = this.gameMainRef.theCodePrefab[i][j];
         let group = this.groups[i][j];
-        group.init(nodes,values,i, j);
+        group.init(nodes,i, j);
         group.setIsPush(true);          // 设置为是推动过来的...
         this.onProcessingGroup.unshift(group);
         this.check();      // 确认是否有堆可以被合并起来...
@@ -52,8 +155,12 @@ export class GameManager extends Component {
             }
             let row = groupA.getRow();
             let column = groupA.getColumn();
-            for(let i = 0; i < this.processMasks.length; i++) {
-                let mask = this.processMasks[i];
+            let processMasks = singleColumn;
+            if(column % 2 == 0) {
+                processMasks = doubleColumn;
+            }
+            for(let i = 0; i < processMasks.length; i++) {
+                let mask = processMasks[i];
                 let rowArr = this.groups[row+mask[0]];
                 if(rowArr) {
                     let groupB = this.groups[row+mask[0]][column+mask[1]];
@@ -64,10 +171,12 @@ export class GameManager extends Component {
                     let isLock = groupB.getLock();
                     let together = this.checkCanbeTogether(groupA, groupB);
                     if(!isLock && together) {       // 不是被锁定的，可以被合并，那么就需要被合并起来...
-                        groupA.setLock(true);
-                        groupB.setLock(true);
+                        groupA.setLock(true);       // 先锁定
+                        groupB.setLock(true);       // 先锁定
                         this.onProcessingGroup.push(groupB);        // 把groupB也纳入到，即将被处理的那块堆之中...
                         this.processTwoGroup(groupA, groupB);
+                        groupA.setIsPush(false);
+                        groupB.setIsPush(false);
                         return;
                     }
                 }
@@ -78,10 +187,16 @@ export class GameManager extends Component {
     private processTwoGroup(groupA:GroupCode, groupB:GroupCode) {
         let together = this.checkCanbeTogether(groupA, groupB);     // 再次做一下，是否可以被合并的判断。虽然有点多余...
         if(together) {
+            // 如果到了这里，说明说已经有相同的部分需要移动了。
             let isApush = groupA.getIsPush();
             // 如果都不是推送过来的，那么就要判断，那个多，那个少， 少的 叠到多的上面去...
-            let numA = groupA.getTailNum();         // 判断，叠在上面的同一颜色的 筹码有几张....
-            let numB = groupB.getTailNum();
+
+            // let numA = groupA.getTailNum();         // 判断，叠在上面的同一颜色的 筹码有几张....
+            // let numB = groupB.getTailNum();
+
+            let numA = this.myTableData.getTailNum(groupA.getRow(), groupA.getColumn());
+            let numB = this.myTableData.getTailNum(groupB.getRow(), groupB.getColumn());
+
             if(isApush) {
                 this.moveFrom1to2(groupB, groupA,numB);
                 return;
@@ -103,7 +218,30 @@ export class GameManager extends Component {
 
     /** 把A移动到B */
     private moveFrom1to2(groupA:GroupCode,groupB:GroupCode,num:number) {
+        //如果确定是有筹码，会飘动，就需要去监听，动画完成的事件....
+        groupA.listenToFlyAnimationDone(groupA.getRow(),groupA.getColumn());
+        groupB.listenToFlyAnimationDone(groupA.getRow(),groupA.getColumn());
+
+
+
         let bTail:Node = groupB.getTailNode();
+        if(!bTail) {
+            console.error("===============xxxxxxxxxxxxxxxxx");
+        }
+
+        // 创建一个备忘录..
+        let fromRow = groupA.getRow();
+        let fromColumn = groupA.getColumn();
+        let toRow = groupB.getRow();
+        let toColumn = groupB.getColumn();
+        let color:ChipColor = bTail.getComponent(ColorCode).getColor();
+        this.myTableData.createNoteData(fromRow,fromColumn,toRow,toColumn,color,num);
+        // 结束创建一个备忘录..
+
+
+
+
+
         let worldPosB = bTail.getWorldPosition();        // 获得最后一个节点的坐标..
         let aTail:Node = groupA.getTailNode();
         let worldPosA = aTail.getWorldPosition();           // 获得A节点的世界坐标...
@@ -127,20 +265,25 @@ export class GameManager extends Component {
             dic = CodeDirection.Up;
         }
         else if(radian >-79 && radian < -12) {
-            dic = CodeDirection.LeftUp;
+            dic = CodeDirection.RightUp;
         }
 
         for(let i = 0; i < num; i++) {
+            groupB.setCheckToDelete(true);
             let node = groupA.getTailIndexNode(i);
             let targetPos = new Vec3(worldPosB.x,worldPosB.y + CodeHeight*(i+1), worldPosB.z);
-            this.scheduleOnce(this.moveOneNodeToTarget.bind(this,node,targetPos,dic), 0.1 * i);
+            this.scheduleOnce(this.moveOneNodeToTarget.bind(this,node,targetPos,dic,i,num,groupA.getRow(),groupA.getColumn()), 0.12 * i);
         }
     }
 
 
 
-    private moveOneNodeToTarget(node:Node, targetPos:Vec3, dir:CodeDirection) {
-        node.getComponent(ColorCode).doMove(targetPos, dir);
+    private moveOneNodeToTarget(node:Node, targetPos:Vec3, dir:CodeDirection,index:number, total:number,row:number,column:number) {
+        let tell = false;           // 发送一个通知的事件....如果动画已经结束的话，发送一次通知事件...
+        if(index + 1 == total) {
+            tell = true;
+        }
+        node.getComponent(ColorCode).doMove(targetPos, dir, tell,row,column);
     }
 
     /** 推送结束的时候，执行对应的操作，检查是否可以叠起来 */
@@ -159,8 +302,8 @@ export class GameManager extends Component {
 
     /** 检查是否可以被合并 */
     private checkCanbeTogether(groupA:GroupCode, groupB:GroupCode):boolean {
-        let valuesA = groupA.getValues();
-        let valuesB = groupB.getValues();
+        let valuesA = this.myTableData.getChips(groupA.getRow(),groupA.getColumn());
+        let valuesB = this.myTableData.getChips(groupB.getRow(),groupB.getColumn());
         if(!valuesA) {
             return false;
         }

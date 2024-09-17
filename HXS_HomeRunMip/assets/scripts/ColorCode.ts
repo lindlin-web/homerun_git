@@ -53,7 +53,6 @@ export class ColorCode extends Component {
             this.rotateAxis = new Vec3(Math.sin(rad),0,-Math.cos(rad));
         }
         else if(dir == CodeDirection.RightUp) {
-            console.log("===================是否是开始执行这个转动的呢====================");
             this.rotateAxis = new Vec3(-Math.sin(rad),0,-Math.cos(rad));
         }
     }
@@ -63,10 +62,19 @@ export class ColorCode extends Component {
         let currentWorldPos = this.node.getWorldPosition();         // 获得当前的世界坐标...
 
         let length = currentWorldPos.clone().subtract(this.moveTarget).length();
-        this.spendTime = 0.45;
-        let targetPos0 = new Vec3(this.node.worldPosition.x, this.node.worldPosition.y + 1.0, this.node.worldPosition.z);
-        let targetPos1 = new Vec3(this.node.worldPosition.x, targetPos.y, this.node.worldPosition.z);
-        tween(this.node).to(this.spendTime / 4, {worldPosition:targetPos0}).to(this.spendTime/4, {worldPosition:targetPos1}).to(this.spendTime / 2, {worldPosition:targetPos}).call(()=>{
+        this.spendTime = 0.35;
+        let sub = targetPos.clone().subtract(this.node.worldPosition).normalize();
+
+        let targetPos0 = new Vec3(this.node.worldPosition.x, this.node.worldPosition.y, this.node.worldPosition.z);
+        let targetPos1 = new Vec3(targetPos.x, targetPos.y+1.4, targetPos.z);
+        targetPos1 = targetPos0.add(sub);
+        targetPos1.y = targetPos.y + 0.6;
+        this.startRotate(dir);
+        let targetRot0 = this.doRotate(90);
+        let targetRot1 = this.doRotate(180);
+        
+        tween(this.model).to(this.spendTime / 2, {rotation:targetRot0}).to(this.spendTime / 2, {rotation:targetRot1}).start();
+        tween(this.node).to(this.spendTime / 2, {worldPosition:targetPos1}).to(this.spendTime / 2, {worldPosition:targetPos}).call(()=>{
             this.startAnim = false;
             this.model.eulerAngles = new Vec3(-90, 0, 0);
             this.node.worldPosition = targetPos;
@@ -74,24 +82,24 @@ export class ColorCode extends Component {
                 NotifyMgrCls.getInstance().send(AppNotify.FlyAnimationDone,row,column);
             }
         }).start();
-        this.startRotate(dir);
         this.rotateSpeed = 180 / this.spendTime;
     }
 
     doRotate(angle) {
         let rotation = quat();
         let rad = misc.degreesToRadians(angle);
-        this.currentRotateAngle += angle;
-        Quat.rotateAround(rotation,this.model.rotation, this.rotateAxis, rad);
-        this.model.rotation = rotation;
+        let temp = quat();
+        Quat.fromEuler(temp,-90,0,0);
+        Quat.rotateAround(rotation,temp, this.rotateAxis, rad);
+        return rotation;
     }
 
-    update(deltaTime: number) {
-        if(this.startAnim) {
-            let angle = this.rotateSpeed * deltaTime;
-            this.doRotate(angle);
-        }
-    }
+    // update(deltaTime: number) {
+    //     if(this.startAnim) {
+    //         let angle = this.rotateSpeed * deltaTime;
+    //         this.doRotate(angle);
+    //     }
+    // }
 }
 
 

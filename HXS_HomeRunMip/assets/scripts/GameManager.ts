@@ -272,7 +272,7 @@ export class GameManager extends Component {
             groupB.setCheckToDelete(true);
             let node = groupA.getTailIndexNode(i);
             let targetPos = new Vec3(worldPosB.x,worldPosB.y + CodeHeight*(i+1), worldPosB.z);
-            this.scheduleOnce(this.moveOneNodeToTarget.bind(this,node,targetPos,dic,i,num,groupA.getRow(),groupA.getColumn()), 0.12 * i);
+            this.scheduleOnce(this.moveOneNodeToTarget.bind(this,node,targetPos,dic,i,num,groupA.getRow(),groupA.getColumn()), 0.09 * i);
         }
     }
 

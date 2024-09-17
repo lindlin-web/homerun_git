@@ -30,9 +30,21 @@ export class GameMain extends Component {
     private startZ:number = 3;
     private gapX:number = 1.7;
     private gapZ:number = 1.0;
-    private rowNum:number = 10;
-    private columnNum:number = 10;
-    private theMinimumGap:number = 0.15;                // 检测的最小的偏差是多少...
+    private rowNum:number = 9;
+    private columnNum:number = 9;
+    private theMinimumGap:number = 0.25;                // 检测的最小的偏差是多少...
+
+    private groupStatus = [
+        [0,0,0,1,1,1,0,0,0],
+        [0,1,1,1,1,1,1,1,0],
+        [0,1,1,1,1,1,1,1,1],
+        [0,1,1,1,1,1,1,1,1],
+        [1,1,1,1,1,1,1,1,1],
+        [1,1,1,1,1,1,1,1,1],
+        [0,1,1,1,1,1,1,0,0],
+        [0,0,1,1,1,0,1,0,0],
+        [0,0,1,0,0,0,0,0,0]
+    ]
 
 
 
@@ -45,16 +57,17 @@ export class GameMain extends Component {
 
     private theTempNode = new Node();
 
-    private moveSpeed = 20;                  // 这个是移动速度?????????????
+    private moveSpeed = 50;                  // 这个是移动速度?????????????
 
     private createArr = [];                  // 创建的那个数组
     private tempI = 0;                          // 选定的那个 row
     private tempJ = 0;                          // 选定的那个column
 
-    private manager:GameManager = null;         // 游戏的管理类...
+    private manager:GameManager;         // 游戏的管理类...
 
-    private pushNodeInitWorldPosition:Vec3 = new Vec3(0, 0, 0);         // 推的位置的初始化位置....
+    private initPushNodePosition:Vec3 = new Vec3(-1,0,12);                     // 发牌的初始化位置.......
 
+    private pushChipsPosition:Vec3 = new Vec3(5,0,12);                         // 重新发牌的位置.........
     @property({type:Node})
     testNode:Node;
     start() {
@@ -71,27 +84,18 @@ export class GameMain extends Component {
                 let discNode = instantiate(this.discCode);
                 this.baseCodeNode[i][j] = discNode;
                 if(j % 2 == 0) {
-                    discNode.setPosition(this.startX + j * this.gapX , 0, this.startZ - i * this.gapZ * 2 + 1);
+                    discNode.setPosition(this.startX + j * this.gapX , 0, this.startZ - i * this.gapZ * 2 + 0.966);
                 } else {
                     discNode.setPosition(this.startX + j * this.gapX, 0, this.startZ - i * this.gapZ * 2);
                 }
                 this.gameMain.addChild(discNode);           // 添加了底盘...
 
-                let firstVisible = Math.random() > 0.9 ? true: false;       // 头部有一定的概率不要叠.... 
-                if(!firstVisible && i == 0) {
+                let firstVisible = this.groupStatus[i][j] > 0 ? true: false;       // 头部有一定的概率不要叠.... 
+                if(!firstVisible) {
                     this.manager.setChips(i, j,[]);
                     continue;
                 }
-                if(i == 1) {
-                    let arr = this.manager.getChips(i-1,j);
-                    if(arr && arr.length == 0) {
-                        let secondVisible = Math.random() > 0.3? true: false;       // 头部有一定的概率不要叠.... 
-                        if(!secondVisible) {
-                            this.manager.setChips(i, j,[]);
-                            continue;
-                        }
-                    }
-                }
+                
 
                 let createArr = this.manager.createChips(i, j);
                 for(let z = 0; z < createArr.length; z++) {
@@ -110,6 +114,7 @@ export class GameMain extends Component {
         this.manager.createGroups();            // 创建那个堆...
 
 
+        this.pushNode.setPosition(this.initPushNodePosition);
         let holdChips = this.manager.createHoldChips();
         for(let i = 0; i < holdChips.length; i++) {
             let index = holdChips[i];
@@ -170,12 +175,34 @@ export class GameMain extends Component {
                 this.isChooseOn = false;
                 this.attachBoxColliderForChildren(this.isChooseOn);    
             }
-            if(this.thePreChooseBase) {
+            let children = this.pushNode.getChildByName("dog").children;
+            if(this.thePreChooseBase && children && children.length > 0) {             // 就是先前选定的那个底座...
                 this.pushTheCode();
                 this.thePreChooseBase.getComponent(BaseCode).setBaseActive(false);
                 this.thePreChooseBase = null;
+
+                
             }
         });
+    }
+
+    /** ----------重新发牌---------- */
+    public reCreateChins() {
+        this.pushNode.setPosition(this.pushChipsPosition);
+        this.theGuide.active = true;
+
+        // 重新生成
+        let holdChips = this.manager.createHoldChips();
+        for(let i = 0; i < holdChips.length; i++) {
+            let index = holdChips[i];
+            let prefab = instantiate(this.prefabs[index]);
+            let child = prefab.getChildByName("HXS_FK_1");
+            prefab.getComponent(ColorCode).setColor(index);
+            child.addComponent(BoxCollider);
+            prefab.setPosition(0, 0.25 * (i + 1), 0);
+            this.pushNode.getChildByName("dog").addChild(prefab);
+        }
+
     }
 
     /** 这个代码的意思是把 碟码给推送出去... */
@@ -193,7 +220,6 @@ export class GameMain extends Component {
 
         let targetPos = this.thePreChooseBase.getWorldPosition();
         let time =Math.abs(targetPos.z - dogWorldPosition.z) / this.moveSpeed;
-        console.log("================我看看这个地方，会执行多少次==================1111111111");
         tween(this.theTempNode)
             .to(time,{worldPosition:targetPos}).call(()=>{
                 let children = this.theTempNode.children;
@@ -208,8 +234,8 @@ export class GameMain extends Component {
                 }
                 this.manager.pushHoldChips(this.tempI, this.tempJ);
                 this.theCodePrefab[this.tempI][this.tempJ] = myChildren;                        // 获取到prefab...
-                console.log("================我看看这个地方，会执行多少次==================2222222");
                 this.manager.setPushGroup(this.tempI, this.tempJ);
+                this.reCreateChins();
             }).start();
     }
 
@@ -251,6 +277,21 @@ export class GameMain extends Component {
                 }
             }
         }
+        let column = retVal[1];
+        let retColumn = -1;
+        if(column >= 0) {
+            for(let i = 0; i < this.baseCodeNode.length; i++) {
+                let theArrValue = this.manager.getChips(i, column);
+                if(theArrValue && theArrValue.length == 0) {
+                    retColumn = i;
+                }
+                else if(theArrValue && theArrValue.length > 0) {
+                    break;
+                }
+                
+            }
+        }
+        retVal[0] = retColumn;
         return retVal;
     }
 

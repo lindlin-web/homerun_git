@@ -145,8 +145,8 @@
     "_shadowPcf": 3,
     "_shadowBias": 0.00001,
     "_shadowNormalBias": 0,
-    "_shadowSaturation": 0.89,
-    "_shadowDistance": 862.2,
+    "_shadowSaturation": 0.6,
+    "_shadowDistance": 1311.9,
     "_shadowInvisibleOcclusionRange": 200,
     "_csmLevel": 4,
     "_csmLayerLambda": 0.75,
@@ -184,16 +184,16 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": -1.2,
-      "y": 56.553,
-      "z": 30.628
+      "x": -0.8,
+      "y": 86,
+      "z": 48
     },
     "_lrot": {
       "__type__": "cc.Quat",
-      "x": -0.5934188866037015,
+      "x": -0.5519369853120581,
       "y": 0,
       "z": 0,
-      "w": 0.8048937973559142
+      "w": 0.8338858220671682
     },
     "_lscale": {
       "__type__": "cc.Vec3",
@@ -205,7 +205,7 @@
     "_layer": 1073741824,
     "_euler": {
       "__type__": "cc.Vec3",
-      "x": -72.8,
+      "x": -67,
       "y": 0,
       "z": 0
     },
@@ -223,7 +223,7 @@
     "__prefab": null,
     "_projection": 1,
     "_priority": 0,
-    "_fov": 37,
+    "_fov": 22,
     "_fovAxis": 0,
     "_orthoHeight": 10,
     "_near": 1,

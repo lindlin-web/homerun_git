@@ -66,7 +66,7 @@ export class ColorCode extends Component {
         let sub = targetPos.clone().subtract(this.node.worldPosition).normalize();
 
         let targetPos0 = new Vec3(this.node.worldPosition.x, this.node.worldPosition.y, this.node.worldPosition.z);
-        let targetPos1 = new Vec3(targetPos.x, targetPos.y+1.4, targetPos.z);
+        let targetPos1 = new Vec3(targetPos.x, targetPos.y+1.6, targetPos.z);
         targetPos1 = targetPos0.add(sub);
         targetPos1.y = targetPos.y + 0.6;
         this.startRotate(dir);

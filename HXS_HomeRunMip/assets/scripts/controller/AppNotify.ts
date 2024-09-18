@@ -3,6 +3,7 @@
 export class AppNotify{
     public static FlyAnimationDone:string = "FlyAnimationDone"; // 飞盘的动作已经完成了.....
     public static DeleteDone:string = "DeleteDone";             // 删除已经完成了.....
+    public static MovingDone:string = "MovingDone";             // 移动已经完成了..... 就是从列做紧凑的移动..
 }
 
 
@@ -19,13 +20,13 @@ export class NotifyMgrCls {
         return NotifyMgrCls.instance;
     }
 
-    public send(sub:string,args1=null,args2=null) {
+    public send(sub:string,args1=null,args2=null,args3=null, args4=null) {
         let index = this.subject.indexOf(sub);
         let funcs:Function[] = this.subscribes[index];
         for(let i = 0; i < funcs.length; i++) {
             let fun = funcs[i];
             if(fun) {
-                fun(args1,args2);
+                fun(args1,args2,args3, args4);
             }
         }
     }

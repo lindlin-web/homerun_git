@@ -1,6 +1,6 @@
-import { _decorator, Component, Node } from 'cc';
+import { _decorator, Component, Node, tween, Vec3 } from 'cc';
 import { AppNotify, NotifyMgrCls } from './controller/AppNotify';
-import { ChipColor, DELETECOUNT } from './data/MyTableData';
+import { ChipColor, CodeHeight, DELETECOUNT } from './data/MyTableData';
 import { ColorCode } from './ColorCode';
 const { ccclass, property } = _decorator;
 
@@ -20,10 +20,16 @@ export class GroupCode extends Component {
     private listenRow:number = -1;          // 监听,某个堆的动画，是否已经完成了...
     private listenColumn:number = -1;       // 监听,某个堆的动画，是否已经完成了...
 
+    private tempParentNode:Node = null;
+
     public init(codes,row, column) {
         this.codes = codes;
         this.row = row;
         this.column = column;
+    }
+
+    public isEmpty() {
+        return this.codes && this.codes.length == 0;
     }
 
     /** 从背后删除相应数量的对应color的chip */
@@ -73,7 +79,7 @@ export class GroupCode extends Component {
             if(!nextNode || nextNode.getComponent(ColorCode).getColor() != value) {
                 over = true;
             }
-            this.scheduleOnce(this.deleteChip.bind(this,currentIndex,over),0.06 * (total - i));
+            tween(this.codes[i]).delay((total-i)*0.07).to(0.07,{scale:new Vec3(0, 0,0)}).call(this.deleteChip.bind(this,currentIndex,over)).start();
             if(over) {
                 break;
             }
@@ -84,6 +90,7 @@ export class GroupCode extends Component {
     private deleteChip(index:number, isOver:boolean) {
         console.log(index, "==============这个是我要删除的index");
         let chip = this.codes[index];
+
         chip.removeFromParent();
         chip.destroy();
         this.codes.splice(index, 1);
@@ -91,7 +98,7 @@ export class GroupCode extends Component {
             // 发送一个事件,
             this.isCheckToDelete = false;       // 如果已经删除完毕了。就可以解锁了..
             this.isLock = false;                // 如果已经删除完毕了，就可以解锁了..
-            NotifyMgrCls.getInstance().send(AppNotify.DeleteDone);
+            NotifyMgrCls.getInstance().send(AppNotify.DeleteDone,this.column);
         }
     }
 
@@ -132,6 +139,31 @@ export class GroupCode extends Component {
         return this.codes[this.codes.length - 1 - index];
     }
 
+    /** 把孩子移动到目标地址 */
+    public moveChildrenToTarget(fromPos:Vec3,targetPos:Vec3,fromRow,fromColum, toRow, toColumn) {
+        this.tempParentNode = new Node();
+        let theParent = this.codes[0].parent;
+        theParent.addChild(this.tempParentNode);
+        this.tempParentNode.setPosition(fromPos);
+        for(let i = 0; i < this.codes.length; i++) {
+            this.codes[i].parent = this.tempParentNode;
+            this.codes[i].setPosition(new Vec3(0,(i+1)*CodeHeight,0));
+        }
+
+        tween(this.tempParentNode).to(0.18, {position:targetPos}).call(()=>{
+            let parent = this.tempParentNode.parent;
+            let worldPos = this.tempParentNode.getWorldPosition();
+            for(let i = this.tempParentNode.children.length-1; i>=0; i--) {
+                let child = this.tempParentNode.children[i];
+                child.parent = parent;
+                child.setWorldPosition(worldPos.x, (i+1)*CodeHeight, worldPos.z);
+            }
+            this.tempParentNode.destroy();
+            this.tempParentNode = null;
+            NotifyMgrCls.getInstance().send(AppNotify.MovingDone,fromRow,fromColum, toRow, toColumn);
+        }).start();
+    }
+
     
     /** 是否是推动过来的那个堆 */
     public setIsPush(bo:boolean) {
@@ -146,6 +178,14 @@ export class GroupCode extends Component {
     /** 判断是否是被锁定了，被锁定就不能被影响... */
     public setLock(bo:boolean) {
         this.isLock = bo;
+    }
+
+    public getGroup(){
+        return this.codes;
+    }
+
+    public setGroup(codes:Node[]) {
+        this.codes = codes;
     }
 
     // 获得这个堆的行信息

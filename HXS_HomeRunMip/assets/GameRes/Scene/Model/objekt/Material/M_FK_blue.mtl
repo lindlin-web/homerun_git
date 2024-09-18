@@ -78,8 +78,8 @@
       "mainColor": {
         "__type__": "cc.Color",
         "r": 0,
-        "g": 55,
-        "b": 255,
+        "g": 49,
+        "b": 228,
         "a": 255
       },
       "specularIntensity": 0.05,

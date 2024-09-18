@@ -4,8 +4,8 @@
     "designResolution": {
       "width": 720,
       "height": 1440,
-      "fitHeight": true,
-      "fitWidth": false
+      "fitHeight": false,
+      "fitWidth": true
     }
   },
   "script": {

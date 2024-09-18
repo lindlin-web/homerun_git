@@ -1,9 +1,9 @@
-import { _decorator, Component, Node, Vec2, Vec3 } from 'cc';
+import { _decorator, Component, Node, tween, Vec2, Vec3 } from 'cc';
 import { GroupCode } from './GroupCode';
 import { ColorCode } from './ColorCode';
 import {GameMain } from './GameMain';
 import { AppNotify, NotifyMgrCls } from './controller/AppNotify';
-import { ChipColor, CodeDirection, CodeHeight, doubleColumn, MyTableData, singleColumn } from './data/MyTableData';
+import { ChipColor, CodeDirection, CodeHeight, COLUMNNUM, doubleColumn, MyTableData, ROWNUM, singleColumn } from './data/MyTableData';
 const { ccclass, property } = _decorator;
 
 @ccclass('GameManager')
@@ -17,18 +17,55 @@ export class GameManager extends Component {
     private gameMainRef:GameMain = null;            // 获取一个主界面的引用...
 
     private myTableData:MyTableData = null;
+
     public init(gameMain:GameMain) {
         this.gameMainRef = gameMain;
         this.myTableData = new MyTableData();
         this.myTableData.init();
         NotifyMgrCls.getInstance().observe(AppNotify.FlyAnimationDone, this.onAnimationDone.bind(this));
         NotifyMgrCls.getInstance().observe(AppNotify.DeleteDone, this.onDeleteDone.bind(this));
+        NotifyMgrCls.getInstance().observe(AppNotify.MovingDone, this.onMovingDone.bind(this));
+    }
+
+    private onMovingDone(fromRow,fromColum, toRow,toColumn) {
+        let groupA = this.getGroup(fromRow, fromColum);
+        let groupB = this.getGroup(toRow, toColumn);
+        groupA.setLock(false);
+        groupB.setLock(false);
+
+        let finishTime = this.myTableData.setMovingFinish(fromColum);
+
+        let compactDatas = this.myTableData.getCompactDatasByColumn(fromColum);
+        let compactLength = compactDatas.myDataLength();
+        if(compactLength == finishTime) {
+            for(let i = 0; i < compactLength; i++) {
+                let compact = compactDatas.getIndexData(i);
+                let fromRow = compact.fromRow;
+                let fromColum = compact.fromColumn;
+                let toRow = compact.toRow;
+                let toColumn = compact.toColumn;
+                let groupA = this.getGroup(fromRow, fromColum);
+                let groupB = this.getGroup(toRow, toColumn);
+                groupB.setGroup(groupA.getGroup());
+                groupA.setGroup([]);
+
+                let chips = this.myTableData.getChips(fromRow, fromColum);
+                this.myTableData.setChips(toRow,toColumn, chips);
+                this.myTableData.setChips(fromRow, fromColum, []);
+            }
+
+            this.myTableData.removeColumnMovingMes(fromColum);
+        }
     }
 
     /** 当删除完毕的时候 */
-    private onDeleteDone() {
+    private onDeleteDone(column:number) {
+        // 在这个地方，需要确认一下，是否有可以拖动的堆，就是每一个列，往后堆起来....
+
         this.scheduleOnce(this.check.bind(this),0.1);
         console.log("我是否已经做好了删除的工作的呢");
+
+        this.doTheColumnMoveingthing(column);
     }
 
     public createGroups() {
@@ -58,8 +95,8 @@ export class GameManager extends Component {
         return arr;
     }
     /** 创建某一个墩子的chips */
-    public createChips(row:number, column:number) {
-        let array = this.myTableData.createChipsData(row, column);
+    public createChips(row:number, column:number,value:number) {
+        let array = this.myTableData.createChipsData(row, column,value);
         return array;       // 创建的筹码 堆，给返回...
     }
 
@@ -103,8 +140,10 @@ export class GameManager extends Component {
         this.myTableData.deleteNoteDataByRow_Column(Row, Colum);
         // ---------------------------------------------------------------------------------------
 
+        this.checkCircle(toRow, toColumn);              // 再次，确认一下周边.是否有可以被删除的堆...
+        //this.checkCanBeDelete(toRow,toColumn);
 
-        this.checkCanBeDelete(toRow,toColumn);
+        this.doTheColumnMoveingthing(Colum);
     }
 
     /** 一个堆从尾巴被删除掉 */
@@ -128,6 +167,128 @@ export class GameManager extends Component {
         }
     }
 
+    /** 某一个列，做移动的操作 */
+    public doTheColumnMoveingthing(column:number) {
+        let checkCanBeMove = true;     // 检查是否可以被移动
+        for(let i = 0; i <= ROWNUM - 1; i++) {
+            let group = this.getGroup(i, column);
+            let isPush = group.getIsPush();
+            let isLock = group.getLock();
+            if(isPush || isLock) {
+                checkCanBeMove = false;
+                break;
+            }
+        }
+        if(checkCanBeMove) {
+            //this.myTableData.createMovingColumn(column);            // 为某个列创建一个移动的数据...
+            for(let i = ROWNUM - 1; i >= 0; i--)
+            {
+                let group = this.getGroup(i, column);
+                if(group.isEmpty()) {
+                    continue;
+                }
+                let moveNum = 0;
+                for(let j = i+1; j <= ROWNUM - 1; j++) {
+                    let g = this.getGroup(j, column);
+                    let isEmpty = g.isEmpty();
+                    if(isEmpty) {
+                        moveNum++;
+                    }
+                }
+                /** 移动的数据信息 */
+                if(moveNum > 0) {
+                    this.myTableData.createMovingColumnData(group.getRow(),group.getColumn(), group.getRow()+moveNum, group.getColumn());
+                }
+            }
+
+            this.doTheGroupMoveing(column);
+        }
+    }
+
+    /** 两个堆，做一下移动的操作 */
+    public doTheGroupMoveing(column:number) {
+        let movingDatas = this.myTableData.getCompactDatasByColumn(column);
+        if(movingDatas) {
+            let compactDatas = movingDatas.myCompactData();
+            for(let i = 0; i < compactDatas.length; i++) {
+                let compact = compactDatas[i];
+                let fromRow = compact.fromRow;
+                let fromColumn = compact.fromColumn;
+                let toRow = compact.toRow;
+                let toColumn = compact.toColumn;
+                let groupA = this.getGroup(fromRow, fromColumn);
+                let groupB = this.getGroup(toRow, toColumn);
+    
+                this.doMovingAction(groupA,groupB);
+            }    
+        }
+        
+    }
+
+    /** 做组的移动的动作 */
+    public doMovingAction(gA:GroupCode, gB:GroupCode) {
+        let fromRow = gA.getRow();
+        gA.setLock(true);
+        let fromColum = gA.getColumn();
+        let toRow = gB.getRow();
+        gB.setLock(true);
+        let toColumn = gB.getColumn();
+
+        let fromPos = this.gameMainRef.getBaseCodePosition(fromRow, fromColum);
+        let toPos = this.gameMainRef.getBaseCodePosition(toRow, toColumn);
+        
+        gA.moveChildrenToTarget(fromPos, toPos, fromRow, fromColum, toRow, toColumn);
+    }
+
+    public getBackEmpty(row:number, column:number) {
+        let retVal = -1;
+        for(let i = row + 1; i <= ROWNUM - 1; i++) {
+            let group = this.getGroup(i, column);
+            let empty = group.isEmpty();
+            if(empty) {
+                retVal = i;
+                break;
+            }
+        }
+        return retVal;
+    }
+
+
+    /** 确认周边的行和列 */
+    public checkCircle(toRow, toColumn) {
+        let group = this.getGroup(toRow, toColumn);     // 再次确认一下周边，是否还有可以被删除的堆..
+        let row = group.getRow();
+        let column = group.getColumn();
+        let processMasks = singleColumn;
+        if(column % 2 == 0) {
+            processMasks = doubleColumn;
+        }
+
+        for(let i = 0; i < processMasks.length; i++) {
+            let mask = processMasks[i];
+            let rowArr = this.groups[row+mask[0]];
+            if(rowArr) {
+                let groupB = this.groups[row+mask[0]][column+mask[1]];
+                // 非空..
+                if(!groupB) {
+                    continue;
+                }
+                let isLock = groupB.getLock();
+                let together = this.checkCanbeTogether(group, groupB);
+                if(!isLock && together) {       // 不是被锁定的，可以被合并，那么就需要被合并起来...
+                    group.setLock(true);       // 先锁定
+                    groupB.setLock(true);       // 先锁定
+                    this.onProcessingGroup.push(groupB);        // 把groupB也纳入到，即将被处理的那块堆之中...
+                    this.processTwoGroup(group, groupB);
+                    group.setIsPush(false);
+                    groupB.setIsPush(false);
+                    return;
+                }
+            }
+        }
+        this.checkCanBeDelete(toRow,toColumn);
+    }
+
     public getGroup(row:number, column:number):GroupCode {
         return this.groups[row][column];
     }
@@ -144,13 +305,15 @@ export class GameManager extends Component {
 
     /** push过来的时候第一个堆就是新推动过来的堆，判断是否有可以被合并的. */
     public check() {
-        for(let m = 0; m < this.onProcessingGroup.length; m++) {
+        for(let m = this.onProcessingGroup.length - 1; m >= 0; m--) {
             let groupA = this.onProcessingGroup[m];
             if(!groupA) {
+                this.onProcessingGroup.splice(m, 1);
                 continue;
             }
             let isAlock = groupA.getLock();
             if(isAlock) {
+                this.onProcessingGroup.splice(m, 1);
                 continue;
             }
             let row = groupA.getRow();
@@ -181,7 +344,11 @@ export class GameManager extends Component {
                     }
                 }
             }
+            this.onProcessingGroup.splice(m, 1);
+            groupA.setIsPush(false);
         }
+        console.log("==============清空一下===============");
+        this.onProcessingGroup = [];
     }
 
     private processTwoGroup(groupA:GroupCode, groupB:GroupCode) {

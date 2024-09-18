@@ -2,6 +2,7 @@ import { _decorator, Camera, Component, EventTouch, Input, input, instantiate, N
 import { BaseCode } from './BaseCode';
 import { ColorCode } from './ColorCode';
 import { GameManager } from './GameManager';
+import { COLUMNNUM, ROWNUM } from './data/MyTableData';
 const { ccclass, property } = _decorator;
 
 
@@ -26,25 +27,36 @@ export class GameMain extends Component {
 
     @property({type:Node})
     gameMain:Node = null;
-    private startX:number = -8;
-    private startZ:number = 3;
-    private gapX:number = 1.7;
-    private gapZ:number = 1.0;
-    private rowNum:number = 9;
-    private columnNum:number = 9;
+    private startX:number = -10;
+    private startZ:number = 7;
+    private gapX:number = 1.64;
+    private gapZ:number = 0.99;
+    private rowNum:number = ROWNUM;
+    private columnNum:number = COLUMNNUM;
     private theMinimumGap:number = 0.25;                // 检测的最小的偏差是多少...
 
+
+
+    //export enum ChipColor {BLUE,GREEN,RED, YELLOW};
+
     private groupStatus = [
-        [0,0,0,1,1,1,0,0,0],
-        [0,1,1,1,1,1,1,1,0],
-        [0,1,1,1,1,1,1,1,1],
-        [0,1,1,1,1,1,1,1,1],
-        [1,1,1,1,1,1,1,1,1],
-        [1,1,1,1,1,1,1,1,1],
-        [0,1,1,1,1,1,1,0,0],
-        [0,0,1,1,1,0,1,0,0],
-        [0,0,1,0,0,0,0,0,0]
-    ]
+        [1,3,0,-1,0,-1,0,-1,0,4,3,1],
+        [3,2,3, 0,1, 0,4, 0,2,1,2,3],
+        [2,4,2, 4,3, 2,1, 3,4,3,4,2],
+        [4,1,4, 1,2, 4,3, 2,1,2,1,4],
+        [1,3,1, 3,4, 1,2, 4,3,4,3,1],
+        [3,2,3, 2,1, 3,4, 1,2,1,2,3],
+        [2,4,2, 4,3, 2,1, 3,4,3,4,2],
+        [4,1,4, 1,2, 4,3, 2,1,2,1,4],
+        [1,3,1, 3,4, 1,2, 4,3,4,3,1],
+        [3,2,3, 2,1, 3,4, 1,2,1,2,3],
+        [2,4,2, 4,3, 2,1, 3,4,3,4,2],
+        [4,1,4, 1,2, 4,3, 2,1,2,1,4],
+    ];
+
+
+
+
 
 
 
@@ -67,7 +79,7 @@ export class GameMain extends Component {
 
     private initPushNodePosition:Vec3 = new Vec3(-1,0,12);                     // 发牌的初始化位置.......
 
-    private pushChipsPosition:Vec3 = new Vec3(5,0,12);                         // 重新发牌的位置.........
+    private pushChipsPosition:Vec3 = new Vec3(7,0,12);                         // 重新发牌的位置.........
     @property({type:Node})
     testNode:Node;
     start() {
@@ -84,22 +96,30 @@ export class GameMain extends Component {
                 let discNode = instantiate(this.discCode);
                 this.baseCodeNode[i][j] = discNode;
                 if(j % 2 == 0) {
-                    discNode.setPosition(this.startX + j * this.gapX , 0, this.startZ - i * this.gapZ * 2 + 0.966);
+                    discNode.setPosition(this.startX + j * this.gapX , 0, this.startZ - i * this.gapZ * 2 );
                 } else {
-                    discNode.setPosition(this.startX + j * this.gapX, 0, this.startZ - i * this.gapZ * 2);
+                    discNode.setPosition(this.startX + j * this.gapX, 0, this.startZ - i * this.gapZ * 2+ 0.966);
                 }
                 this.gameMain.addChild(discNode);           // 添加了底盘...
-
-                let firstVisible = this.groupStatus[i][j] > 0 ? true: false;       // 头部有一定的概率不要叠.... 
-                if(!firstVisible) {
+                let nosee = this.groupStatus[i][j] == -1;
+                if(nosee) {
+                    discNode.active = false;
                     this.manager.setChips(i, j,[]);
                     continue;
                 }
-                
+                let firstVisible = this.groupStatus[i][j] == 0 ? true: false;       // 头部有一定的概率不要叠.... 
+                if(firstVisible) {
+                    this.manager.setChips(i, j,[]);
+                    continue;
+                }
 
-                let createArr = this.manager.createChips(i, j);
+                let createArr = this.manager.createChips(i, j,this.groupStatus[i][j]);
                 for(let z = 0; z < createArr.length; z++) {
                     let index = createArr[z];
+                    let prefab = this.prefabs[index];
+                    if(!prefab) {
+                        console.log("=========================xxx");
+                    }
                     let pref = instantiate(this.prefabs[index]);
                     this.theCodePrefab[i][j][z] = pref;                 // 获取筹码的引用指针...
                     pref.getComponent(ColorCode).setColor(index);
@@ -113,7 +133,6 @@ export class GameMain extends Component {
 
         this.manager.createGroups();            // 创建那个堆...
 
-
         this.pushNode.setPosition(this.initPushNodePosition);
         let holdChips = this.manager.createHoldChips();
         for(let i = 0; i < holdChips.length; i++) {
@@ -122,15 +141,14 @@ export class GameMain extends Component {
             let child = prefab.getChildByName("HXS_FK_1");
             prefab.getComponent(ColorCode).setColor(index);
             child.addComponent(BoxCollider);
+            child.getComponent(BoxCollider).size = new Vec3(3,3,3);
             prefab.setPosition(0, 0.25 * (i + 1), 0);
             this.pushNode.getChildByName("dog").addChild(prefab);
         }
 
         systemEvent.on(SystemEventType.TOUCH_START, (touch:Touch) => {
-
             let touchPos = touch.getLocation();
             let ray = this.mainCamera.screenPointToRay(touchPos.x, touchPos.y);
-
             if(PhysicsSystem.instance.raycastClosest(ray)) {
                 const res = PhysicsSystem.instance.raycastClosestResult;
                 const hitNode = res.collider.node;
@@ -140,7 +158,6 @@ export class GameMain extends Component {
                 }
             }
         }, this);
-
         
         systemEvent.on(SystemEventType.TOUCH_MOVE, (touch:Touch) =>{
             let touchPos = touch.getLocation();
@@ -157,6 +174,10 @@ export class GameMain extends Component {
                         this.tempI = theChooseIndex[0];
                         this.tempJ = theChooseIndex[1];
                         let baseNode = this.baseCodeNode[this.tempI][this.tempJ];
+                        if(this.thePreChooseBase) {
+                            this.thePreChooseBase.getComponent(BaseCode).setBaseActive(false);
+                            this.thePreChooseBase = null;
+                        }
                         this.thePreChooseBase = baseNode;
                         let component = baseNode.getComponent(BaseCode);
                         component.setBaseActive(true);
@@ -199,10 +220,11 @@ export class GameMain extends Component {
             let child = prefab.getChildByName("HXS_FK_1");
             prefab.getComponent(ColorCode).setColor(index);
             child.addComponent(BoxCollider);
+            child.getComponent(BoxCollider).size = new Vec3(3,3,3);
             prefab.setPosition(0, 0.25 * (i + 1), 0);
             this.pushNode.getChildByName("dog").addChild(prefab);
         }
-
+        tween(this.pushNode).to(0.2, {position:this.initPushNodePosition}).start();
     }
 
     /** 这个代码的意思是把 碟码给推送出去... */
@@ -249,11 +271,16 @@ export class GameMain extends Component {
             child = child.getChildByName("HXS_FK_1");
             child.addComponent(BoxCollider);
             if(bo) {
-                child.addComponent(BoxCollider);
+                child.getComponent(BoxCollider).size = new Vec3(3,3,3);
             } else {
                 child.removeComponent(BoxCollider);
             }
         }
+    }
+
+    public getBaseCodePosition(row:number, column:number) {
+        let pos:Vec3 = this.baseCodeNode[row][column].getPosition();
+        return pos;
     }
 
     public getMostCorrectPosition(testWorldPos:Vec3) {

@@ -1,3 +1,4 @@
+import { Compact, CompactMovingData } from "./wig/CompactMovingData";
 import { NoteData } from "./wig/NoteData";
 
 
@@ -12,13 +13,16 @@ export enum CodeDirection {
     RightUp
 };
 
+export const ROWNUM:number = 12;
+export const COLUMNNUM:number = 12;
+
 export const DELETECOUNT:number = 10;
 
-export const singleColumn:number[][] = [[1,0],[-1,0],[1,1],[1,-1],[0,1],[0,-1]];         // 1, 3, 5, 7等等的列
-export const doubleColumn:number[][] = [[1,0],[-1,0],[0,1],[0,-1],[-1,1],[-1,-1]];         // 0, 2, 4, 6等等的列
+export const doubleColumn:number[][] = [[1,0],[-1,0],[1,1],[1,-1],[0,1],[0,-1]];         // 1, 3, 5, 7等等的列
+export const singleColumn:number[][] = [[1,0],[-1,0],[0,1],[0,-1],[-1,1],[-1,-1]];         // 0, 2, 4, 6等等的列
 
 // 筹码的高度，在这里统一设置...
-export const CodeHeight:number = 0.25;
+export const CodeHeight:number = 0.27;
 
 export class MyTableData {
     
@@ -30,6 +34,83 @@ export class MyTableData {
 
 
     private noteDatas:NoteData[] = [];              // 有关笔记本的数据，放在这里....
+
+    private compactDatas:CompactMovingData[] = [];      // 有关列的移动的数据，放置在这个地方....
+
+    private finishedTime:Object = {};
+
+    /** 创建一个移动的列 */
+    public createMovingColumn(column:number) {
+        let compactColumn = new CompactMovingData();
+        compactColumn.init(column);
+        this.compactDatas.push(compactColumn);
+    }
+
+    public setMovingFinish(column:number) {
+        let value = this.finishedTime[column + "_"];
+        if(!value) {
+            this.finishedTime[column + "_"] = 0;
+            
+        }
+        this.finishedTime[column + "_"]++;
+        value = this.finishedTime[column + "_"];
+        return value;
+    }
+
+    public removeColumnMovingMes(column:number) {
+        this.finishedTime[column+"_"] = 0;
+        for(let i = 0; i < this.compactDatas.length; i++) {
+            let dd = this.compactDatas[i];
+            if(dd.getColumn() == column) {
+                this.compactDatas.splice(i, 1);
+            }
+        }
+    }
+
+    public getCompactDatasByColumn(column:number) {
+        let targetColumnData:CompactMovingData = null;
+        for(let i = 0; i < this.compactDatas.length; i++) {
+            let theColumn = this.compactDatas[i];
+            let myColumn = theColumn.getColumn();
+            if(myColumn == column) {
+                targetColumnData = theColumn;           // 获得这个列的数据
+                break;
+            }
+        }
+        if(!targetColumnData) {
+            //console.error("==================not founded error===================");
+        }
+        return targetColumnData;
+    }
+
+    /** 创建一个针对列移动的数据, fromColumn,toColumn应该是一样的 */
+    public createMovingColumnData(fromRow:number, fromColumn:number, toRow:number, toColumn:number) {
+
+        let compactDatas = this.getCompactDatasByColumn(fromColumn);
+        if(!compactDatas) {
+            this.createMovingColumn(toColumn);
+        }
+        let compact = new Compact();
+        compact.fromRow = fromRow;
+        compact.fromColumn = fromColumn;
+        compact.toRow = toRow;
+        compact.toColumn = toColumn;
+
+        let targetColumnData:CompactMovingData = null;
+        for(let i = 0; i < this.compactDatas.length; i++) {
+            let theColumn = this.compactDatas[i];
+            let myColumn = theColumn.getColumn();
+            if(myColumn == fromColumn) {
+                targetColumnData = theColumn;           // 获得这个列的数据
+                break;
+            }
+        }
+        if(targetColumnData) {
+            targetColumnData.pushData(compact);         // 把移动的数据，放进去...
+        } else {
+            console.error("===========肯定是出错了===========");
+        }
+    }
 
     public getTableData():number[][][] {
         return this.tableData;
@@ -147,7 +228,7 @@ export class MyTableData {
     
     public createHoldChips() {
         var discCount = Math.floor(Math.random() * 6) + 5;          // 5 - 10 个之间的碟码
-        let createArr = this.createRandomIndexByCount(discCount);
+        let createArr = this.createRandomIndexByCount(discCount,undefined,undefined,0);
         for(let i = 0; i < createArr.length; i++) {
             let val = createArr[i];
             this.holdChips[i] = val;
@@ -177,9 +258,9 @@ export class MyTableData {
         this.tableData[row][column] = arr;
     }
     /** 初始化，一个墩子的 筹码 */
-    public createChipsData(row:number, column:number) {
+    public createChipsData(row:number, column:number,value:number) {
         var discCount = Math.floor(Math.random() * 6) + 5;          // 5 - 10 个之间的碟码
-        let createArr = this.createRandomIndexByCount(discCount);
+        let createArr = this.createRandomIndexByCount(discCount,row,column,value);
         let rows = this.tableData[row];
         if(!rows) {
             this.tableData[row] = [];
@@ -231,7 +312,7 @@ export class MyTableData {
 
 
     // 靠 disCount生成碟饼
-    private createRandomIndexByCount(discCount:number):number[] {
+    private createRandomIndexByCount(discCount:number,row:number,column:number,value:number):number[] {
         let retVal:number[] = [];            // 返回一个都是数组的
         // 确定下来,需要一个颜色，还是需要两个颜色的碟码...
         var randomValue = Math.random() > 0.5 ? 1 : 2;                  // 是一种颜色，还是两种颜色.
@@ -243,12 +324,18 @@ export class MyTableData {
         decideColor.push(randomColor2);
         for(let m = 0; m < discCount; m++) {
             if(randomValue == 1) {
+                if(row>=0 && column>=0) {
+                    decideColor[0] = value-1;
+                }
                 retVal.push(decideColor[0]);
             }
             else {
-                if(m < gap) {
+                if(m < gap && gap < discCount) {
                     retVal.push(decideColor[0]);
                 } else {
+                    if(row>=0 && column>=0) {
+                        decideColor[1] = value-1;
+                    }
                     retVal.push(decideColor[1]);
                 }
             }

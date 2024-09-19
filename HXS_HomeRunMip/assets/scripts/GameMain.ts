@@ -3,6 +3,8 @@ import { BaseCode } from './BaseCode';
 import { ColorCode } from './ColorCode';
 import { GameManager } from './GameManager';
 import { COLUMNNUM, ROWNUM } from './data/MyTableData';
+import { AudioMgr } from './AudioMgr';
+import { TailPage } from './TailPage';
 const { ccclass, property } = _decorator;
 
 
@@ -19,6 +21,9 @@ export class GameMain extends Component {
     @property({type:Prefab})
     public discCode:Prefab = null;
 
+    @property({type:Node})
+    public hand:Node = null;
+
     @property({type:[Prefab]})
     public prefabs:[] = [];
 
@@ -27,7 +32,7 @@ export class GameMain extends Component {
 
     @property({type:Node})
     gameMain:Node = null;
-    private startX:number = -10;
+    private startX:number = -15;
     private startZ:number = 7;
     private gapX:number = 1.64;
     private gapZ:number = 0.99;
@@ -35,28 +40,25 @@ export class GameMain extends Component {
     private columnNum:number = COLUMNNUM;
     private theMinimumGap:number = 0.25;                // 检测的最小的偏差是多少...
 
-
-
     //export enum ChipColor {BLUE,GREEN,RED, YELLOW};
 
+    @property({type:Prefab})
+    public theEffect:Prefab;
+
     private groupStatus = [
-        [1,3,0,-1,0,-1,0,-1,0,4,3,1],
-        [3,2,3, 0,1, 0,4, 0,2,1,2,3],
-        [2,4,2, 4,3, 2,1, 3,4,3,4,2],
-        [4,1,4, 1,2, 4,3, 2,1,2,1,4],
-        [1,3,1, 3,4, 1,2, 4,3,4,3,1],
-        [3,2,3, 2,1, 3,4, 1,2,1,2,3],
-        [2,4,2, 4,3, 2,1, 3,4,3,4,2],
-        [4,1,4, 1,2, 4,3, 2,1,2,1,4],
-        [1,3,1, 3,4, 1,2, 4,3,4,3,1],
-        [3,2,3, 2,1, 3,4, 1,2,1,2,3],
-        [2,4,2, 4,3, 2,1, 3,4,3,4,2],
-        [4,1,4, 1,2, 4,3, 2,1,2,1,4],
+        [3,4,3,2,1,3,0,-1,0,-1,0,-1,0,4,3,2,1,3,1, 3],
+        [2,1,2,4,3,2,3, 0,1, 0,4, 0,2,1,2,4,3,2,3, 2],
+        [4,3,4,1,2,4,2, 4,3, 2,1, 3,4,3,4,1,2,4,2, 4],
+        [1,2,1,3,4,1,4, 1,2, 4,3, 2,1,2,1,3,4,1,4, 1],
+        [3,4,3,2,1,3,1, 3,4, 1,2, 4,3,4,3,2,1,3,1, 3],
+        [2,1,2,4,3,2,3, 2,1, 3,4, 1,2,1,2,4,3,2,3, 2],
+        [4,3,4,1,2,4,2, 4,3, 2,1, 3,4,3,4,1,2,4,2, 4],
+        [1,2,1,3,4,1,4, 1,2, 4,3, 2,1,2,1,3,4,1,4, 1],
+        [3,4,3,2,1,3,1, 3,4, 1,2, 4,3,4,3,2,1,3,1, 3],
+        [2,1,2,4,3,2,3, 2,1, 3,4, 1,2,1,2,4,3,2,3, 2],
+        [4,3,4,1,2,4,2, 4,3, 2,1, 3,4,3,4,1,2,4,2, 4],
+        [1,2,1,3,4,1,4, 1,2, 4,3, 2,1,2,1,3,4,1,4, 1],
     ];
-
-
-
-
 
 
 
@@ -69,7 +71,7 @@ export class GameMain extends Component {
 
     private theTempNode = new Node();
 
-    private moveSpeed = 50;                  // 这个是移动速度?????????????
+    private moveSpeed = 70;                  // 这个是移动速度?????????????
 
     private createArr = [];                  // 创建的那个数组
     private tempI = 0;                          // 选定的那个 row
@@ -77,12 +79,63 @@ export class GameMain extends Component {
 
     private manager:GameManager;         // 游戏的管理类...
 
-    private initPushNodePosition:Vec3 = new Vec3(-1,0,12);                     // 发牌的初始化位置.......
+    private initPushNodePosition:Vec3 = new Vec3(-1,0,15);                     // 发牌的初始化位置.......
 
-    private pushChipsPosition:Vec3 = new Vec3(7,0,12);                         // 重新发牌的位置.........
+    private pushChipsPosition:Vec3 = new Vec3(7,0,15);                         // 重新发牌的位置.........
+
     @property({type:Node})
     testNode:Node;
+    private timeIsUp:boolean = false;           // 时间还没到.
+
+    private isOnGuidePart:boolean = true;       // 是否还出在导航的阶段...
+
+    guidePart() {
+        this.pushNode.setPosition(this.initPushNodePosition);
+        this.hand.setPosition(this.initPushNodePosition);
+
+        tween(this.pushNode).delay(1.4).to(0.3, {position:new Vec3(3,0,15)}).call(()=>{
+            let theChooseIndex = this.getMostCorrectPosition(this.pushNode.getWorldPosition());
+            if(theChooseIndex[0] != -1) {
+                this.tempI = theChooseIndex[0];
+                this.tempJ = theChooseIndex[1];
+                let baseNode = this.baseCodeNode[this.tempI][this.tempJ];
+                if(this.thePreChooseBase) {
+                    this.thePreChooseBase.getComponent(BaseCode).setBaseActive(false);
+                    this.thePreChooseBase = null;
+                }
+                this.thePreChooseBase = baseNode;
+                let component = baseNode.getComponent(BaseCode);
+                component.setBaseActive(true);
+            } else {
+                if(this.thePreChooseBase) {
+                    this.thePreChooseBase.getComponent(BaseCode).setBaseActive(false);
+                    this.thePreChooseBase = null;
+                }
+            }
+        }).delay(0.7).call(()=>{
+            this.pushTheCode();
+            this.thePreChooseBase.getComponent(BaseCode).setBaseActive(false);
+            this.thePreChooseBase = null;
+
+            this.isOnGuidePart = false;
+        }).start();
+        tween(this.hand).delay(1.4).to(0.3,{position:new Vec3(3,0,15)}).start();
+    }
+
+
+    onFinished() {
+        this.timeIsUp = true;
+
+        this.shouldOpenFinishPanel();
+    }
+
+    shouldOpenFinishPanel() {
+        if(this.timeIsUp && !this.isChooseOn) {
+            TailPage.Instance.onShowPage();
+        }
+    }
     start() {
+        this.scheduleOnce(this.onFinished.bind(this), 120);
         this.manager = new GameManager();
         this.manager.init(this);
         this.theTempNode.setParent(this.gameMain);
@@ -134,7 +187,8 @@ export class GameMain extends Component {
         this.manager.createGroups();            // 创建那个堆...
 
         this.pushNode.setPosition(this.initPushNodePosition);
-        let holdChips = this.manager.createHoldChips();
+        let holdChips = this.manager.createHoldChips(true);
+
         for(let i = 0; i < holdChips.length; i++) {
             let index = holdChips[i];
             let prefab = instantiate(this.prefabs[index]);
@@ -147,19 +201,30 @@ export class GameMain extends Component {
         }
 
         systemEvent.on(SystemEventType.TOUCH_START, (touch:Touch) => {
+            AudioMgr.Instance.PlayBgm();
+            if(this.isOnGuidePart) {
+                return;
+            }
             let touchPos = touch.getLocation();
             let ray = this.mainCamera.screenPointToRay(touchPos.x, touchPos.y);
             if(PhysicsSystem.instance.raycastClosest(ray)) {
                 const res = PhysicsSystem.instance.raycastClosestResult;
                 const hitNode = res.collider.node;
+                const hitPoint = res.hitPoint;
                 if(hitNode && hitNode.parent && hitNode.parent.parent && hitNode.parent.parent.parent == this.pushNode) {
+                    let worldpos = this.pushNode.getWorldPosition();
                     this.isChooseOn = true;
+                    this.pushNode.setWorldPosition(hitPoint.x, 0, worldpos.z);
+                    this.hand.setWorldPosition(hitPoint.x, 0, worldpos.z);
                     this.attachBoxColliderForChildren(this.isChooseOn);
                 }
             }
         }, this);
         
         systemEvent.on(SystemEventType.TOUCH_MOVE, (touch:Touch) =>{
+            if(this.isOnGuidePart) {
+                return;
+            }
             let touchPos = touch.getLocation();
             let ray = this.mainCamera.screenPointToRay(touchPos.x, touchPos.y);
 
@@ -169,6 +234,7 @@ export class GameMain extends Component {
                 if(this.isChooseOn) {
                     let worldpos = this.pushNode.getWorldPosition();
                     this.pushNode.setWorldPosition(hitPoint.x, 0, worldpos.z);
+                    this.hand.setWorldPosition(hitPoint.x, 0, worldpos.z);
                     let theChooseIndex = this.getMostCorrectPosition(this.pushNode.getWorldPosition());
                     if(theChooseIndex[0] != -1) {
                         this.tempI = theChooseIndex[0];
@@ -192,6 +258,10 @@ export class GameMain extends Component {
         });
 
         systemEvent.on(SystemEventType.TOUCH_END, (touch:Touch)=>{
+            if(this.isOnGuidePart) {
+                return;
+            }
+            AudioMgr.Instance.pos.play();
             if(this.isChooseOn) {
                 this.isChooseOn = false;
                 this.attachBoxColliderForChildren(this.isChooseOn);    
@@ -202,9 +272,11 @@ export class GameMain extends Component {
                 this.thePreChooseBase.getComponent(BaseCode).setBaseActive(false);
                 this.thePreChooseBase = null;
 
-                
             }
+            this.shouldOpenFinishPanel();
         });
+
+this.guidePart();
     }
 
     /** ----------重新发牌---------- */
@@ -213,7 +285,7 @@ export class GameMain extends Component {
         this.theGuide.active = true;
 
         // 重新生成
-        let holdChips = this.manager.createHoldChips();
+        let holdChips = this.manager.createHoldChips(false);
         for(let i = 0; i < holdChips.length; i++) {
             let index = holdChips[i];
             let prefab = instantiate(this.prefabs[index]);

@@ -1,9 +1,10 @@
-import { _decorator, Component, Node, tween, Vec2, Vec3 } from 'cc';
+import { _decorator, Component, instantiate, Node, tween, Vec2, Vec3 } from 'cc';
 import { GroupCode } from './GroupCode';
 import { ColorCode } from './ColorCode';
 import {GameMain } from './GameMain';
 import { AppNotify, NotifyMgrCls } from './controller/AppNotify';
 import { ChipColor, CodeDirection, CodeHeight, COLUMNNUM, doubleColumn, MyTableData, ROWNUM, singleColumn } from './data/MyTableData';
+import { TailPage } from './TailPage';
 const { ccclass, property } = _decorator;
 
 @ccclass('GameManager')
@@ -34,6 +35,7 @@ export class GameManager extends Component {
         groupB.setLock(false);
 
         let finishTime = this.myTableData.setMovingFinish(fromColum);
+        this.onProcessingGroup.push(groupB);
 
         let compactDatas = this.myTableData.getCompactDatasByColumn(fromColum);
         let compactLength = compactDatas.myDataLength();
@@ -55,17 +57,24 @@ export class GameManager extends Component {
             }
 
             this.myTableData.removeColumnMovingMes(fromColum);
+
+            this.check();
         }
     }
 
     /** 当删除完毕的时候 */
-    private onDeleteDone(column:number) {
+    private onDeleteDone(row:number,column:number) {
         // 在这个地方，需要确认一下，是否有可以拖动的堆，就是每一个列，往后堆起来....
 
         this.scheduleOnce(this.check.bind(this),0.1);
         console.log("我是否已经做好了删除的工作的呢");
 
+        let group = this.getGroup(row, column);
+        this.onProcessingGroup.push(group);
+        this.check();
         this.doTheColumnMoveingthing(column);
+
+        TailPage.Instance.plusAdd();
     }
 
     public createGroups() {
@@ -90,8 +99,8 @@ export class GameManager extends Component {
 
     /** 生成用来移动的那些chips */
 
-    public createHoldChips() {
-        let arr = this.myTableData.createHoldChips();
+    public createHoldChips(firstTouch:boolean) {
+        let arr = this.myTableData.createHoldChips(firstTouch);
         return arr;
     }
     /** 创建某一个墩子的chips */
@@ -143,6 +152,9 @@ export class GameManager extends Component {
         this.checkCircle(toRow, toColumn);              // 再次，确认一下周边.是否有可以被删除的堆...
         //this.checkCanBeDelete(toRow,toColumn);
 
+        this.onProcessingGroup.push(fromGroup);
+        this.check();
+
         this.doTheColumnMoveingthing(Colum);
     }
 
@@ -152,12 +164,26 @@ export class GameManager extends Component {
         group.doDeleteThing();
     }
 
+    public deletEffect(node) {
+        this.gameMainRef.node.removeChild(node);
+    }
+
     /** processingNode中检查，是否有可以删除的 */
     public checkCanBeDelete(row:number, column:number) {
         let canBeDeleted = this.myTableData.checkCanbeDelete(row, column);
         if(canBeDeleted) {
             this.myTableData.doDeleteThing(row,column);
             this.doGroupDeleteThing(row, column);
+
+            let prefab = this.gameMainRef.theEffect;
+            let ins = instantiate(prefab);
+
+            let group = this.getGroup(row, column);     // 获得这个堆.....
+            let tail = group.getTailNode();
+            let tailPos = tail.getWorldPosition();
+            this.gameMainRef.node.addChild(ins);
+            ins.setWorldPosition(tailPos);
+            this.scheduleOnce(this.deletEffect.bind(this, ins),0.5);
         } else {
             // 如果不能被删除, 把这个堆，解锁，修改delete状态.......
             let group = this.getGroup(row, column);
@@ -299,7 +325,7 @@ export class GameManager extends Component {
         let group = this.groups[i][j];
         group.init(nodes,i, j);
         group.setIsPush(true);          // 设置为是推动过来的...
-        this.onProcessingGroup.unshift(group);
+        this.onProcessingGroup.push(group);
         this.check();      // 确认是否有堆可以被合并起来...
     }
 

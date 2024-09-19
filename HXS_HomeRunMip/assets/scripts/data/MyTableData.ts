@@ -14,7 +14,7 @@ export enum CodeDirection {
 };
 
 export const ROWNUM:number = 12;
-export const COLUMNNUM:number = 12;
+export const COLUMNNUM:number = 20;
 
 export const DELETECOUNT:number = 10;
 
@@ -226,9 +226,12 @@ export class MyTableData {
         return num;
     }
     
-    public createHoldChips() {
+    public createHoldChips(firstTouch:boolean) {
         var discCount = Math.floor(Math.random() * 6) + 5;          // 5 - 10 个之间的碟码
         let createArr = this.createRandomIndexByCount(discCount,undefined,undefined,0);
+        if(firstTouch) {
+            createArr = [2,2,2,2,2,2,2];
+        }
         for(let i = 0; i < createArr.length; i++) {
             let val = createArr[i];
             this.holdChips[i] = val;
@@ -315,7 +318,7 @@ export class MyTableData {
     private createRandomIndexByCount(discCount:number,row:number,column:number,value:number):number[] {
         let retVal:number[] = [];            // 返回一个都是数组的
         // 确定下来,需要一个颜色，还是需要两个颜色的碟码...
-        var randomValue = Math.random() > 0.5 ? 1 : 2;                  // 是一种颜色，还是两种颜色.
+        var randomValue = Math.random() > 0.3 ? 1 : 2;                  // 是一种颜色，还是两种颜色.
         var gap = Math.floor(Math.random() * discCount) + 1;        // 1 - discount之间
         var decideColor = [];
         var randomColor = Math.floor(Math.random() * 3.99);

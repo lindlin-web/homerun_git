@@ -1,6 +1,7 @@
 import { _decorator, Component, misc, Node, Quat, quat, tween, Vec3 } from 'cc';
 import { ChipColor, CodeDirection } from './data/MyTableData';
 import { AppNotify, NotifyMgrCls } from './controller/AppNotify';
+import { AudioMgr } from './AudioMgr';
 const { ccclass, property } = _decorator;
 
 @ccclass('ColorCode')
@@ -73,6 +74,7 @@ export class ColorCode extends Component {
         let targetRot0 = this.doRotate(90);
         let targetRot1 = this.doRotate(180);
         
+        AudioMgr.Instance.pile.play();
         tween(this.model).to(this.spendTime / 2, {rotation:targetRot0}).to(this.spendTime / 2, {rotation:targetRot1}).start();
         tween(this.node).to(this.spendTime / 2, {worldPosition:targetPos1}).to(this.spendTime / 2, {worldPosition:targetPos}).call(()=>{
             this.startAnim = false;

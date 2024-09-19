@@ -98,7 +98,7 @@ export class GroupCode extends Component {
             // 发送一个事件,
             this.isCheckToDelete = false;       // 如果已经删除完毕了。就可以解锁了..
             this.isLock = false;                // 如果已经删除完毕了，就可以解锁了..
-            NotifyMgrCls.getInstance().send(AppNotify.DeleteDone,this.column);
+            NotifyMgrCls.getInstance().send(AppNotify.DeleteDone,this.row,this.column);
         }
     }
 

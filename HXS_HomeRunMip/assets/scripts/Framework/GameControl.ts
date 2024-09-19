@@ -21,8 +21,8 @@ export class GameControl extends Component {
 
     GetDownloadUrl() : string{
         var userAgent = navigator.userAgent || navigator.vendor;
-        var url = 'https://apps.apple.com/us/app/blockscapes-paradise/id6477066643';
-        var android = 'https://play.google.com/store/apps/details?id=com.peoplefun.blockscapesparadise&hl=da';
+        var url = 'https://apps.apple.com/us/app/hexa-sort/id6463127238';
+        var android = 'https://play.google.com/store/apps/details?id=com.gamebrain.hexasort&hl=en_US&gl=US';
         if (/android/i.test(userAgent)) {
             url = android
         }

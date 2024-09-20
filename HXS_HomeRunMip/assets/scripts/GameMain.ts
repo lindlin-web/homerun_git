@@ -135,7 +135,7 @@ export class GameMain extends Component {
         }
     }
     start() {
-        this.scheduleOnce(this.onFinished.bind(this), 120);
+        this.scheduleOnce(this.onFinished.bind(this), 105);
         this.manager = new GameManager();
         this.manager.init(this);
         this.theTempNode.setParent(this.gameMain);

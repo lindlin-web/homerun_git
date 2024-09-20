@@ -86,10 +86,10 @@
     },
     "_lrot": {
       "__type__": "cc.Quat",
-      "x": -0.7071067811865478,
+      "x": -0.7071067811865479,
       "y": 0,
       "z": 0,
-      "w": 0.7071067811865472
+      "w": 0.7071067811865471
     },
     "_lscale": {
       "__type__": "cc.Vec3",
@@ -101,7 +101,7 @@
     "_layer": 1073741824,
     "_euler": {
       "__type__": "cc.Vec3",
-      "x": -90.00000000000006,
+      "x": -90.00000000000007,
       "y": 0,
       "z": 0
     },
@@ -133,7 +133,7 @@
       "__uuid__": "3e800541-7deb-4a0d-a942-60b819b6bb81@9f3dd",
       "__expectedType__": "cc.Mesh"
     },
-    "_shadowCastingMode": 1,
+    "_shadowCastingMode": 0,
     "_shadowReceivingMode": 1,
     "_shadowBias": 0,
     "_shadowNormalBias": 0,
@@ -177,8 +177,6 @@
       "__id__": 0
     },
     "fileId": "61jmn5UGpTZ4eVlRoSbTXB",
-    "instance": null,
-    "targetOverrides": null,
     "nestedPrefabInstanceRoots": null
   },
   {

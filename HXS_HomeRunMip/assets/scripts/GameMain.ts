@@ -83,8 +83,6 @@ export class GameMain extends Component {
 
     private pushChipsPosition:Vec3 = new Vec3(7,0,15);                         // 重新发牌的位置.........
 
-    @property({type:Node})
-    testNode:Node;
     private timeIsUp:boolean = false;           // 时间还没到.
 
     private isOnGuidePart:boolean = true;       // 是否还出在导航的阶段...
@@ -396,16 +394,6 @@ this.guidePart();
 
     update(deltaTime: number) {
         
-    }
-
-    testButton() {
-        /** 测试 A->B两个组的合并 */
-        // let groupA = this.manager.getGroup(3, 3);
-        // let groupB = this.manager.getGroup(2, 3);
-        // this.manager.moveFrom1to2(groupA, groupB);
-
-        /** 测试 筹码的转动 */
-        //this.testNode.getComponent(ColorCode).startRotate(CodeDirection.Down);
     }
 }
 

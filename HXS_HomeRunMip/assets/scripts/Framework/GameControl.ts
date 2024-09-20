@@ -9,6 +9,7 @@ export class GameControl extends Component {
     public static firstLoading = true;
     protected onLoad(): void {
         window['GameControl'] = this;
+        console.log("===========hello world===========GameControl init()=============");
     }
 
     protected start(): void {
@@ -57,14 +58,17 @@ export class GameControl extends Component {
     }
 
     static DownloadClick(){
+        console.log("===========hello world===========GameControl GetDownloadUrl()=============DownloadClick");
         var GameFinish = window["GameFinish"]
         if (GameFinish != null)
         {
+            console.log("===========hello world===========GameControl GetDownloadUrl()=============11111111111111111111111111111111");
             GameFinish();
         }
         var ClickDownLoad = window["ClickDownLoad"]
         if (ClickDownLoad != null)
         {
+                console.log("===========hello world===========GameControl GetDownloadUrl()=============22222222222222222222222222");
                 ClickDownLoad();
         }
     }

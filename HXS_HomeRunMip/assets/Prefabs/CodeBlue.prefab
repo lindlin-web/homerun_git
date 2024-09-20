@@ -121,7 +121,7 @@
     },
     "_materials": [
       {
-        "__uuid__": "3ddc1bc6-fe17-4dbc-a9f5-e6f1bb5502ff",
+        "__uuid__": "1abab629-fecf-41e6-ab41-5b5273fa5477",
         "__expectedType__": "cc.Material"
       }
     ],
@@ -130,7 +130,7 @@
       "__id__": 5
     },
     "_mesh": {
-      "__uuid__": "3e800541-7deb-4a0d-a942-60b819b6bb81@9f3dd",
+      "__uuid__": "de1a703f-cd04-4519-be50-32f45b90b523@9f3dd",
       "__expectedType__": "cc.Mesh"
     },
     "_shadowCastingMode": 0,
@@ -177,6 +177,8 @@
       "__id__": 0
     },
     "fileId": "61jmn5UGpTZ4eVlRoSbTXB",
+    "instance": null,
+    "targetOverrides": null,
     "nestedPrefabInstanceRoots": null
   },
   {

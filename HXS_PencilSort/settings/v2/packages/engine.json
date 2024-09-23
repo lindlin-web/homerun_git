@@ -80,7 +80,7 @@
         "_value": false
       },
       "particle-2d": {
-        "_value": false
+        "_value": true
       },
       "audio": {
         "_value": true
@@ -136,6 +136,7 @@
       "light-probe",
       "meshopt",
       "particle",
+      "particle-2d",
       "physics-ammo",
       "primitive",
       "profiler",

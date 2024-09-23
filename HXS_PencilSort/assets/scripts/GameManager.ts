@@ -378,6 +378,7 @@ export class GameManager extends Component {
             this.onProcessingGroup.splice(m, 1);
             groupA.setIsPush(false);
         }
+
         console.log("==============清空一下===============");
         this.onProcessingGroup = [];
     }

@@ -58,14 +58,14 @@ export class GameMain extends Component {
     public theEffect:Prefab;
 
     private groupStatus = [
-        [-1,-1,-1,-1,-1,-1,1, 0,0, 0,3,-1,-1,-1,-1,-1,-1],
-        [ 2, 1, 2, 4, 3, 2,3, 0,0, 0,4, 1, 2, 1, 2, 4, 3],
-        [ 4, 3, 4, 1, 2, 4,2, 4,0, 2,1, 3, 4, 3, 4, 1, 2],
-        [ 1, 2, 1, 3, 4, 1,4, 1,2, 4,3, 2, 1, 2, 1, 3, 4],
-        [ 3, 4, 3, 2, 1, 3,1, 3,4, 1,2, 4, 3, 4, 3, 2, 1],
-        [ 2, 1, 2, 4, 3, 2,3, 2,1, 3,4, 1, 2, 1, 2, 4, 3],
-        [ 4, 3, 4, 1, 2, 4,2, 4,3, 2,1, 3, 4, 3, 4, 1, 2],
-        [ 1, 2, 1, 3, 4, 1,4, 1,2, 4,3, 2, 1, 2, 1, 3, 4]
+        [-1,-1,-1,-1,-1,-1,1, 0,0, 0,6,-1,-1,-1,-1,-1,-1],
+        [ 2, 1, 2, 4, 3, 7,5, 0,0, 0,7, 6, 2, 6, 6, 2, 3],
+        [ 4, 3, 4, 1, 2, 6,2, 4,0, 6,3, 1, 4, 5, 3, 5, 7],
+        [ 1, 6, 1, 5, 4, 5,7, 2,4, 5,4, 3, 1, 7, 2, 1, 4],
+        [ 3, 5, 3, 2, 1, 2,1, 1,2, 3,1, 2, 3, 4, 3, 2, 1],
+        [ 6, 7, 5, 7, 2, 3,4, 7,6, 2,4, 7, 6, 1, 4, 7, 3],
+        [ 5, 2, 6, 6, 7, 4,3, 5,4, 3,2, 5, 2, 3, 2, 6, 2],
+        [ 7, 4, 7, 3, 5, 1,6, 1,2, 1,6, 4, 1, 6, 5, 3, 4]
     ];
 
 
@@ -94,6 +94,8 @@ export class GameMain extends Component {
     private timeIsUp:boolean = false;           // 时间还没到.
 
     private isOnGuidePart:boolean = false;       // 不需要引导了......
+
+    private totalTime:number = 0;
 
     private pushNodes:Node[] = [];
     // guidePart() {
@@ -197,7 +199,6 @@ export class GameMain extends Component {
         }
 
         this.manager.createGroups();            // 创建那个堆...
-
         for(let i = 0; i < 3; i++) {
             this.pushNodes[i].setPosition(this.initPositions[i]);
         }
@@ -294,9 +295,21 @@ export class GameMain extends Component {
                     this.pushTheCode();
                     this.thePreChooseBase.getComponent(BaseCode).setBaseActive(false);
                     this.thePreChooseBase = null;
-                    
                 }
             }
+
+            let index = 0;
+            for(let i = 0; i < this.pushNodes.length; i++) {
+                let push = this.pushNodes[i];
+                if(push == this.theCurrentPushNode) {
+                    index = i;
+                    break;
+                }
+            }
+            if(this.theCurrentPushNode) {
+                this.theCurrentPushNode.setPosition(this.initPositions[index]);
+            }
+
             this.shouldOpenFinishPanel();
         });
 
@@ -379,6 +392,30 @@ export class GameMain extends Component {
             }).start();
     }
 
+
+    /** ======================确认是否已经满了====================== */
+    public checkIsFull() {
+        let isFull = true;
+        for(let i = 0; i < this.rowNum; i++) {
+            let rowNodes = this.baseCodeNode[i];
+            for(let j = 0; j < this.columnNum; j++) {
+                let rowColumn = rowNodes[j];
+                if(rowColumn.active) {
+                    let group = this.manager.getGroup(i, j);
+                    let lock = group.getLock();
+                    if(lock) {
+                        isFull = false;
+                    }
+                    if(group.isEmpty()) {
+                        isFull = false;
+                    }
+                }
+            }
+        }
+        console.log(isFull);
+        return isFull;
+    }
+
     
 
     public attachBoxColliderForChildren(bo) {
@@ -412,7 +449,7 @@ export class GameMain extends Component {
                 let baseNode = arr[j];
                 let baseWorld = baseNode.getWorldPosition();
                 let theArrValue = this.manager.getChips(i, j);
-                if(theArrValue && theArrValue.length == 0) {
+                if(baseNode.active && theArrValue && theArrValue.length == 0) {
                     let gap = wp1.clone().subtract(new Vec2(baseWorld.x, baseWorld.z)).length();
                 
                     if(gap < this.theMinimumGap && theArrValue && theArrValue.length == 0) {
@@ -432,7 +469,14 @@ export class GameMain extends Component {
     }
 
     update(deltaTime: number) {
-        
+        this.totalTime += deltaTime;
+        if(this.totalTime > 0.5) {
+            let bo = this.checkIsFull();
+            this.totalTime -= 0.5;
+            if(bo) {
+                TailPage.Instance.onShowPage();
+            }
+        }
     }
 }
 

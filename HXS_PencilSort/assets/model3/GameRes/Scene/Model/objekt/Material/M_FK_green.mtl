@@ -10,7 +10,9 @@
   },
   "_techIdx": 0,
   "_defines": [
-    {},
+    {
+      "USE_NORMAL_MAP": true
+    },
     {},
     {},
     {},
@@ -89,6 +91,10 @@
         "g": 30,
         "b": 30,
         "a": 255
+      },
+      "normalMap": {
+        "__uuid__": "2987d97d-77c0-4660-92c8-cf107d9bfe4c@6c48a",
+        "__expectedType__": "cc.Texture2D"
       }
     },
     {},

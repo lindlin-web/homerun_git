@@ -356,6 +356,10 @@ export class MyTableData {
                 if(!row) {
                     decideColor[0] = value;
                 }
+                else {
+                    decideColor[0] = value -1;
+                }
+                
                 retVal.push(decideColor[0]);
             }
             else {
@@ -364,6 +368,9 @@ export class MyTableData {
                 } else {
                     if(!row) {
                         decideColor[1] = value;
+                    }
+                    else {
+                        decideColor[0] = value -1;
                     }
                     retVal.push(decideColor[1]);
                 }

@@ -1,4 +1,4 @@
-import { _decorator, Camera, Component, EventTouch, Input, input, instantiate, Node, Prefab, systemEvent, SystemEventType, Vec3 ,Touch, PhysicsSystem, BoxCollider, tween} from 'cc';
+import { _decorator, Camera, Component, EventTouch, Input, input, instantiate, Node, Prefab, systemEvent, SystemEventType, Vec3 ,Touch, PhysicsSystem, BoxCollider, tween,screen} from 'cc';
 import { BaseCode } from './BaseCode';
 import { ColorCode } from './ColorCode';
 import { GameManager } from './GameManager';
@@ -32,7 +32,7 @@ export class GameMain extends Component {
 
     @property({type:Node})
     gameMain:Node = null;
-    private startX:number = -15;
+    private startX:number = -18.9;
     private startZ:number = 7;
     private gapX:number = 1.64;
     private gapZ:number = 0.99;
@@ -40,24 +40,26 @@ export class GameMain extends Component {
     private columnNum:number = COLUMNNUM;
     private theMinimumGap:number = 0.25;                // 检测的最小的偏差是多少...
 
+
+
     //export enum ChipColor {BLUE,GREEN,RED, YELLOW};
 
     @property({type:Prefab})
     public theEffect:Prefab;
 
     private groupStatus = [
-        [3,4,3,2,1,3,0,-1,0,-1,0,-1,0,4,3,2,1,3,1, 3],
-        [2,1,2,4,3,2,3, 0,1, 0,4, 0,2,1,2,4,3,2,3, 2],
-        [4,3,4,1,2,4,2, 4,3, 2,1, 3,4,3,4,1,2,4,2, 4],
-        [1,2,1,3,4,1,4, 1,2, 4,3, 2,1,2,1,3,4,1,4, 1],
-        [3,4,3,2,1,3,1, 3,4, 1,2, 4,3,4,3,2,1,3,1, 3],
-        [2,1,2,4,3,2,3, 2,1, 3,4, 1,2,1,2,4,3,2,3, 2],
-        [4,3,4,1,2,4,2, 4,3, 2,1, 3,4,3,4,1,2,4,2, 4],
-        [1,2,1,3,4,1,4, 1,2, 4,3, 2,1,2,1,3,4,1,4, 1],
-        [3,4,3,2,1,3,1, 3,4, 1,2, 4,3,4,3,2,1,3,1, 3],
-        [2,1,2,4,3,2,3, 2,1, 3,4, 1,2,1,2,4,3,2,3, 2],
-        [4,3,4,1,2,4,2, 4,3, 2,1, 3,4,3,4,1,2,4,2, 4],
-        [1,2,1,3,4,1,4, 1,2, 4,3, 2,1,2,1,3,4,1,4, 1],
+        [2,1,2,1,2,4,3,2,1,0,0,-1,0,-1,0,0,3,4,3,2,1,3,1, 3,4,2,1,2],
+        [4,3,4,3,4,1,2,4,3,2,3, 0,1, 0,4, 1,2,1,2,4,3,2,3, 2,1,4,3,4],
+        [1,2,1,2,1,3,4,1,2,4,2, 4,3, 2,1, 3,4,3,4,1,2,4,2, 4,3,1,2,1],
+        [3,4,3,4,3,2,1,3,4,1,4, 1,2, 4,3, 2,1,2,1,3,4,1,4, 1,2,3,4,3],
+        [2,1,2,1,2,4,3,2,1,3,1, 3,4, 1,2, 4,3,4,3,2,1,3,1, 3,4,2,1,2],
+        [4,3,4,3,4,1,2,4,3,2,3, 2,1, 3,4, 1,2,1,2,4,3,2,3, 2,1,4,3,4],
+        [1,2,1,2,1,3,4,1,2,4,2, 4,3, 2,1, 3,4,3,4,1,2,4,2, 4,3,1,2,1],
+        [3,4,3,4,3,2,1,3,4,1,4, 1,2, 4,3, 2,1,2,1,3,4,1,4, 1,2,3,4,3],
+        [2,1,2,1,2,4,3,2,1,3,1, 3,4, 1,2, 4,3,4,3,2,1,3,1, 3,4,2,1,2],
+        [4,3,4,3,4,1,2,4,3,2,3, 2,1, 3,4, 1,2,1,2,4,3,2,3, 2,1,4,3,4],
+        [1,2,1,2,1,3,4,1,2,4,2, 4,3, 2,1, 3,4,3,4,1,2,4,2, 4,3,1,2,1],
+        [3,4,3,4,3,2,1,3,4,1,4, 1,2, 4,3, 2,1,2,1,3,4,1,4, 1,2,3,4,3],
     ];
 
 
@@ -79,19 +81,37 @@ export class GameMain extends Component {
 
     private manager:GameManager;         // 游戏的管理类...
 
-    private initPushNodePosition:Vec3 = new Vec3(-1,0,15);                     // 发牌的初始化位置.......
+    private initPushNodePosition:Vec3 = new Vec3(-1,0,15);                     // 发牌的初始化位置.......   宽度匹配的时候的初始化位置...
+
+    private initPushNodePositionWidth:Vec3 = new Vec3(-1,0,11)
 
     private pushChipsPosition:Vec3 = new Vec3(7,0,15);                         // 重新发牌的位置.........
+
+    private pushChipsPositionWidth:Vec3 = new Vec3(7,0, 11);
+
+
+    private initGuidePosition:Vec3 = new Vec3(5.6,0,15);
+
+    private initGuidePositionWidth:Vec3 = new Vec3(5.6,0,11);
 
     private timeIsUp:boolean = false;           // 时间还没到.
 
     private isOnGuidePart:boolean = true;       // 是否还出在导航的阶段...
 
+    private isWidthOrHeight:boolean = true;     // true  width,  false, height....
+
     guidePart() {
         this.pushNode.setPosition(this.initPushNodePosition);
         this.hand.setPosition(this.initPushNodePosition);
 
-        tween(this.pushNode).delay(1.4).to(0.3, {position:new Vec3(3,0,15)}).call(()=>{
+        let initGuide = this.initGuidePosition;
+        if(this.isWidthOrHeight) {
+            initGuide = this.initGuidePositionWidth;
+            this.pushNode.setPosition(this.initPushNodePositionWidth);
+            this.hand.setPosition(this.initPushNodePositionWidth);
+        }
+
+        tween(this.pushNode).delay(1.4).to(0.3, {position:initGuide}).call(()=>{
             let theChooseIndex = this.getMostCorrectPosition(this.pushNode.getWorldPosition());
             if(theChooseIndex[0] != -1) {
                 this.tempI = theChooseIndex[0];
@@ -117,7 +137,7 @@ export class GameMain extends Component {
 
             this.isOnGuidePart = false;
         }).start();
-        tween(this.hand).delay(1.4).to(0.3,{position:new Vec3(3,0,15)}).start();
+        tween(this.hand).delay(1.4).to(0.3,{position:initGuide}).start();
     }
 
 
@@ -133,6 +153,13 @@ export class GameMain extends Component {
         }
     }
     start() {
+
+        screen.on("window-resize", this.onWindowResize.bind(this), this);
+        console.log(screen.windowSize);
+        let size = screen.windowSize;
+        this.onWindowResize(size.width, size.height);
+
+
         this.scheduleOnce(this.onFinished.bind(this), 105);
         this.manager = new GameManager();
         this.manager.init(this);
@@ -269,17 +296,41 @@ export class GameMain extends Component {
                 this.pushTheCode();
                 this.thePreChooseBase.getComponent(BaseCode).setBaseActive(false);
                 this.thePreChooseBase = null;
-
             }
             this.shouldOpenFinishPanel();
         });
 
 this.guidePart();
+
+
+        
+
+    }
+
+    onWindowResize(width:number, height:number) {
+        if(width > height) {
+            // 宽匹配
+            this.mainCamera.node.setPosition(new Vec3(0.5, 72.9,44.5));
+            this.isWidthOrHeight = true;                        // 确实 宽度 匹配的
+            this.pushNode.setPosition(this.initPushNodePositionWidth);
+
+        } else {
+            // 长度匹配
+            this.mainCamera.node.setPosition(new Vec3(0.5, 86,55.4));
+            this.isWidthOrHeight = false;                       // 确实是 长度匹配的...
+            this.pushNode.setPosition(this.initPushNodePosition);
+        }
     }
 
     /** ----------重新发牌---------- */
     public reCreateChins() {
+
+        let initPush = this.initPushNodePosition;
         this.pushNode.setPosition(this.pushChipsPosition);
+        if(this.isWidthOrHeight) {
+            this.pushNode.setPosition(this.pushChipsPositionWidth);
+            initPush = this.initPushNodePositionWidth;
+        }
         this.theGuide.active = true;
 
         // 重新生成
@@ -294,7 +345,7 @@ this.guidePart();
             prefab.setPosition(0, 0.25 * (i + 1), 0);
             this.pushNode.getChildByName("dog").addChild(prefab);
         }
-        tween(this.pushNode).to(0.2, {position:this.initPushNodePosition}).start();
+        tween(this.pushNode).to(0.2, {position:initPush}).start();
     }
 
     /** 这个代码的意思是把 碟码给推送出去... */

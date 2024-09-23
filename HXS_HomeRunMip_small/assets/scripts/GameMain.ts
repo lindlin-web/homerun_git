@@ -42,6 +42,8 @@ export class GameMain extends Component {
 
     //export enum ChipColor {BLUE,GREEN,RED, YELLOW};
 
+    @property({type:Node})
+    particleNode:Node = null;
     @property({type:Prefab})
     public theEffect:Prefab;
 
@@ -72,9 +74,9 @@ export class GameMain extends Component {
 
     private manager:GameManager;         // 游戏的管理类...
 
-    private initPushNodePosition:Vec3 = new Vec3(-1,0,15);                     // 发牌的初始化位置.......
+    private initPushNodePosition:Vec3 = new Vec3(-1,0,6.4);                     // 发牌的初始化位置.......
 
-    private pushChipsPosition:Vec3 = new Vec3(7,0,15);                         // 重新发牌的位置.........
+    private pushChipsPosition:Vec3 = new Vec3(7,0,6.4);                         // 重新发牌的位置.........
 
     private timeIsUp:boolean = false;           // 时间还没到.
 
@@ -86,7 +88,7 @@ export class GameMain extends Component {
         this.pushNode.setPosition(this.initPushNodePosition);
         this.hand.setPosition(this.initPushNodePosition);
 
-        tween(this.pushNode).delay(1.4).to(0.3, {position:new Vec3(2,0,15)}).call(()=>{
+        tween(this.pushNode).delay(1.4).to(0.3, {position:new Vec3(2,0,6.4)}).call(()=>{
             let theChooseIndex = this.getMostCorrectPosition(this.pushNode.getWorldPosition());
             if(theChooseIndex[0] != -1) {
                 this.tempI = theChooseIndex[0];
@@ -112,7 +114,7 @@ export class GameMain extends Component {
 
             this.isOnGuidePart = false;
         }).start();
-        tween(this.hand).delay(1.4).to(0.3,{position:new Vec3(3,0,15)}).start();
+        tween(this.hand).delay(1.4).to(0.3,{position:new Vec3(3,0,6.4)}).start();
     }
 
 

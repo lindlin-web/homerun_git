@@ -14,7 +14,7 @@ export enum CodeDirection {
 };
 
 export const ROWNUM:number = 12;
-export const COLUMNNUM:number = 20;
+export const COLUMNNUM:number = 24;
 
 export const DELETECOUNT:number = 10;
 

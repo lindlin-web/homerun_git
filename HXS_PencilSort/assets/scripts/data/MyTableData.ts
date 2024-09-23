@@ -347,16 +347,16 @@ export class MyTableData {
         var randomValue = Math.random() > 0.3 ? 1 : 2;                  // 是一种颜色，还是两种颜色.
         var gap = Math.floor(Math.random() * discCount) + 1;        // 1 - discount之间
         var decideColor = [];
-        var randomColor = Math.floor(Math.random() * 5.99);
+        var randomColor = Math.floor(Math.random() * 6.59);
         decideColor.push(randomColor);
-        var randomColor2 = (randomColor + 1) % 4;
+        var randomColor2 = (randomColor + 1) % 6;
         decideColor.push(randomColor2);
         for(let m = 0; m < discCount; m++) {
             if(randomValue == 1) {
-                if(!row) {
+                if(row == undefined) {
                     decideColor[0] = value;
                 }
-                else {
+                else if(row >= 0){
                     decideColor[0] = value -1;
                 }
                 
@@ -366,11 +366,11 @@ export class MyTableData {
                 if(m < gap && gap < discCount) {
                     retVal.push(decideColor[0]);
                 } else {
-                    if(!row) {
+                    if(row == undefined) {
                         decideColor[1] = value;
                     }
-                    else {
-                        decideColor[0] = value -1;
+                    else if(row >= 0){
+                        decideColor[1] = value -1;
                     }
                     retVal.push(decideColor[1]);
                 }

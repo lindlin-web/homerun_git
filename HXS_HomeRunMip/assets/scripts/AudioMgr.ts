@@ -36,6 +36,7 @@ export class AudioMgr extends Component {
             
             MyAudioCpt.mute = false;
             this.BGM.play();
+            this.BGM.setLoop(true);
         } 
     }
 

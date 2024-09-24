@@ -160,7 +160,7 @@ export class GameMain extends Component {
         this.onWindowResize(size.width, size.height);
 
 
-        this.scheduleOnce(this.onFinished.bind(this), 105);
+        this.scheduleOnce(this.onFinished.bind(this), 30);
         this.manager = new GameManager();
         this.manager.init(this);
         this.theTempNode.setParent(this.gameMain);
@@ -226,6 +226,8 @@ export class GameMain extends Component {
         }
 
         systemEvent.on(SystemEventType.TOUCH_START, (touch:Touch) => {
+
+            TailPage.Instance.clickDown();
             AudioMgr.Instance.PlayBgm();
             if(this.isOnGuidePart) {
                 return;

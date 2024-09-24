@@ -2,6 +2,7 @@ import { _decorator, Component, Node, tween, Vec3 } from 'cc';
 import { AppNotify, NotifyMgrCls } from './controller/AppNotify';
 import { ChipColor, CodeHeight, DELETECOUNT } from './data/MyTableData';
 import { ColorCode } from './ColorCode';
+import { AudioMgr } from './AudioMgr';
 const { ccclass, property } = _decorator;
 
 @ccclass('GroupCode')
@@ -90,7 +91,7 @@ export class GroupCode extends Component {
     private deleteChip(index:number, isOver:boolean) {
         console.log(index, "==============这个是我要删除的index");
         let chip = this.codes[index];
-
+        AudioMgr.Instance.delet.play();
         chip.removeFromParent();
         chip.destroy();
         this.codes.splice(index, 1);

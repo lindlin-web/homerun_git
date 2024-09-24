@@ -2,6 +2,7 @@ import { _decorator, Component, Node, tween, Vec3 } from 'cc';
 import { AppNotify, NotifyMgrCls } from './controller/AppNotify';
 import { ChipColor, CodeHeight, DELETECOUNT } from './data/MyTableData';
 import { ColorCode } from './ColorCode';
+import { AudioMgr } from './AudioMgr';
 const { ccclass, property } = _decorator;
 
 @ccclass('GroupCode')
@@ -94,6 +95,7 @@ export class GroupCode extends Component {
         chip.removeFromParent();
         chip.destroy();
         this.codes.splice(index, 1);
+        AudioMgr.Instance.delet.play();
         if(isOver) {
             // 发送一个事件,
             this.isCheckToDelete = false;       // 如果已经删除完毕了。就可以解锁了..

@@ -21,6 +21,10 @@ export class MyAudioCpt extends Component {
         }
     }
 
+    setLoop(bo) {
+        this.as.loop = bo;
+    }
+
     update(deltaTime:number) {
         if(MyAudioCpt.mute) {
             this.as.volume = 0;

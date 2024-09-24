@@ -78,6 +78,7 @@ export class TailPage extends Component {
     }
 
     clickDown() {
+        console.log("click download version");
         GameControl.DownloadClick();
     }
 

@@ -40,7 +40,7 @@ export class GameMain extends Component {
 
     @property({type:Node})
     gameMain:Node = null;
-    private startX:number = -15;
+    private startX:number = -16;
     private startZ:number = 7;
     private gapX:number = 1.64;
     private gapZ:number = 0.99;
@@ -58,14 +58,14 @@ export class GameMain extends Component {
     public theEffect:Prefab;
 
     private groupStatus = [
-        [-1,-1,-1,-1,-1,-1,1, 0,0, 0,6,-1,-1,-1,-1,-1,-1],
-        [ 2, 1, 2, 5, 3, 7,5, 0,0, 0,7, 6, 2, 6, 6, 2, 3],
-        [ 4, 3, 4, 1, 2, 6,2, 4,0, 6,3, 1, 4, 5, 3, 5, 7],
-        [ 1, 6, 7, 5, 4, 5,7, 2,4, 5,4, 3, 1, 7, 2, 1, 4],
-        [ 3, 5, 3, 2, 1, 2,1, 1,2, 3,1, 2, 3, 4, 3, 2, 1],
-        [ 6, 7, 1, 7, 2, 3,4, 7,6, 2,4, 7, 6, 1, 4, 7, 3],
-        [ 5, 2, 6, 6, 7, 4,3, 5,4, 3,2, 5, 2, 3, 2, 6, 2],
-        [ 7, 4, 7, 3, 5, 1,6, 1,2, 1,6, 4, 1, 6, 5, 3, 4]
+        [-1,-1,-1,-1,-1,-1,-1,1, 0,0, 0,6,-1,-1,-1,-1,-1,-1,-1],
+        [ 1, 2, 1, 2, 5, 3, 7,5, 0,0, 0,7, 6, 2, 6, 1, 2, 3, 2],
+        [ 3, 4, 3, 4, 1, 2, 6,2, 4,0, 6,3, 1, 4, 5, 3, 5, 7, 5],
+        [ 6, 1, 6, 7, 5, 4, 5,7, 2,1, 5,4, 3, 6, 7, 2, 1, 4, 1],
+        [ 5, 3, 5, 3, 2, 1, 2,1, 3,4, 3,1, 2, 4, 5, 3, 2, 6, 2],
+        [ 7, 6, 7, 1, 7, 5, 3,4, 7,6, 2,4, 7, 6, 1, 4, 7, 3, 7],
+        [ 2, 5, 2, 6, 2, 1, 4,2, 5,4, 5,3, 5, 2, 3, 2, 6, 2, 6],
+        [ 4, 7, 4, 7, 3, 5, 1,6, 1,2, 1,6, 4, 1, 6, 5, 3, 4, 3]
     ];
 
 
@@ -150,7 +150,7 @@ export class GameMain extends Component {
         this.manager = new GameManager();
         this.manager.init(this);
 
-        this.hand.active = false;           // 假定是不可见的...
+        this.hand.active = true;           // 假定是不可见的...
         this.theGuide.active = false;       // 假定引导是不可见的...
         this.theTempNode.setParent(this.gameMain);
         this.baseCodeNode = [];
@@ -221,6 +221,7 @@ export class GameMain extends Component {
         }
         
         systemEvent.on(SystemEventType.TOUCH_START, (touch:Touch) => {
+            this.hand.active = false;
             AudioMgr.Instance.PlayBgm();
             if(this.isOnGuidePart) {
                 return;

@@ -121,11 +121,11 @@
     },
     "_materials": [
       {
-        "__uuid__": "e946a7df-f5a6-412f-b147-fbc2008e300a",
+        "__uuid__": "612771de-0ede-4df3-b415-956f7878ee2a",
         "__expectedType__": "cc.Material"
       },
       {
-        "__uuid__": "682249a2-acc4-4a7b-98d2-e118609b4742",
+        "__uuid__": "5e2201f1-ecd3-49c3-873f-2aad997d475c",
         "__expectedType__": "cc.Material"
       }
     ],
@@ -134,11 +134,11 @@
       "__id__": 5
     },
     "_mesh": {
-      "__uuid__": "de1a703f-cd04-4519-be50-32f45b90b523@9f3dd",
+      "__uuid__": "b2f48f87-bac8-4409-8aa5-519fe5cc8ff6@9f3dd",
       "__expectedType__": "cc.Mesh"
     },
-    "_shadowCastingMode": 1,
-    "_shadowReceivingMode": 1,
+    "_shadowCastingMode": 0,
+    "_shadowReceivingMode": 0,
     "_shadowBias": 0,
     "_shadowNormalBias": 0,
     "_reflectionProbeId": -1,

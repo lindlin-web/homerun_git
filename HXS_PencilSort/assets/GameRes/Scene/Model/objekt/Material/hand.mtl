@@ -69,15 +69,8 @@
   ],
   "_props": [
     {
-      "mainColor": {
-        "__type__": "cc.Color",
-        "r": 141,
-        "g": 141,
-        "b": 141,
-        "a": 255
-      },
       "mainTexture": {
-        "__uuid__": "9d085e22-b9a7-4649-92af-632fcfb4438b@6c48a",
+        "__uuid__": "184e1261-f245-437e-8d37-2b57164ab950@6c48a",
         "__expectedType__": "cc.Texture2D"
       }
     },

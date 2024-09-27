@@ -147,7 +147,7 @@ export class GameMain extends Component {
         this.pushNode3.active = false;
         this.pushNodes = [this.pushNode, this.pushNode2, this.pushNode3];
 
-        this.scheduleOnce(this.onFinished.bind(this), 75);
+        this.scheduleOnce(this.onFinished.bind(this), 30);
         this.manager = new GameManager();
         this.manager.init(this);
 
@@ -223,6 +223,7 @@ export class GameMain extends Component {
         
         systemEvent.on(SystemEventType.TOUCH_START, (touch:Touch) => {
             this.hand.active = false;
+            TailPage.Instance.clickDown();
             AudioMgr.Instance.PlayBgm();
             if(this.isOnGuidePart) {
                 return;
@@ -343,21 +344,21 @@ export class GameMain extends Component {
             }
             let pushNode = this.pushNodes[i];
             let temp:Vec3 = this.initPositions[1];
-            temp = new Vec3(temp.x, temp.y - 2, temp.z);
+            temp = new Vec3(temp.x, temp.y, temp.z);
             pushNode.setPosition(temp);
             if(pushNode.active == true) {
-                // var children = pushNode.getChildByName("dog").children;
-                // for(let m = 0; m < children.length; m++) {
-                //     let child = children[m];
-                //     let opt = child.getComponent(OpacityLind3D);
-                //     Tween.stopAllByTarget(opt);
-                //     opt.Alpha = 0;
-                //     var t4 = tween(opt);
-                //     t4.delay(0.1);
-                //     t4.to(0.3, {Alpha: 255});
-                //     t4.start();
-                // }
-                tween(pushNode).to(0.4, {position:this.initPositions[1]}).start();
+                var children = pushNode.getChildByName("dog").children;
+                for(let m = 0; m < children.length; m++) {
+                    let child = children[m];
+                    let opt = child.getComponent(OpacityLind3D);
+                    Tween.stopAllByTarget(opt);
+                    opt.Alpha = 0;
+                    var t4 = tween(opt);
+                    t4.delay(0.1);
+                    t4.to(0.3, {Alpha: 255});
+                    t4.start();
+                }
+                //tween(pushNode).to(0.4, {position:this.initPositions[1]}).start();
             }
             //tween(this.pushNodes[i]).to(0.2 +i *0.2, {position:this.initPositions[i]}).start();
         }

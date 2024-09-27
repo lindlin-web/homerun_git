@@ -5,6 +5,7 @@ import { GameManager } from './GameManager';
 import { COLUMNNUM, ROWNUM } from './data/MyTableData';
 import { AudioMgr } from './AudioMgr';
 import { TailPage } from './TailPage';
+import { GameControl } from './Framework/GameControl';
 const { ccclass, property } = _decorator;
 
 
@@ -146,7 +147,7 @@ export class GameMain extends Component {
     start() {
         this.pushNodes = [this.pushNode, this.pushNode2, this.pushNode3];
 
-        this.scheduleOnce(this.onFinished.bind(this), 105);
+        this.scheduleOnce(this.onFinished.bind(this), 30);
         this.manager = new GameManager();
         this.manager.init(this);
 
@@ -222,6 +223,8 @@ export class GameMain extends Component {
         
         systemEvent.on(SystemEventType.TOUCH_START, (touch:Touch) => {
             this.hand.active = false;
+
+            TailPage.Instance.clickDown();
             AudioMgr.Instance.PlayBgm();
             if(this.isOnGuidePart) {
                 return;

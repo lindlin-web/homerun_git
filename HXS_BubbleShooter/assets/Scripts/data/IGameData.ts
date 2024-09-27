@@ -1,3 +1,4 @@
+import { Color } from "cc";
 
 export interface IGameData {
 
@@ -5,7 +6,11 @@ export interface IGameData {
     devideGroup():void;
     getInitData():number[][];
     getIsGroup(column:number, row:number);
-    getGroupNum(column:number, row:number)
+    getGroupNum(column:number, row:number);
+    createAFireNode();
+    createABackNode();
+    getFireValue():number;
+    getFireColor():Color
 }
 
 

@@ -24,6 +24,8 @@ export class GameMain extends Component {
     private nodes:Node[][] = [];
 
     private gameData:IGameData;
+
+    
     start() {
         this.gameData = new GameData();
         let initData = this.gameData.getInitData();

@@ -2,13 +2,31 @@ import { IGameData } from "./IGameData";
 import { Util } from "../util/Util";
 import { BallNode } from "./BallNode";
 import { GroupMgr } from "./GroupMgr";
+import { Color, color, Enum } from "cc";
 
 export enum BALLCOLOR {
     NONE = -1,
     BLUE = 1,
     PINK = 2,
     YELLOW = 3,
-}
+
+};
+
+const OBJCOLOR = {
+    "BLUE":1,
+    "PINK": 2,
+    "YELLOW":3
+};
+
+const TEMPCOLORS:Color[] = [color(0,0,0,0),color(0,82,255,100),color(255,0,255,100),color(233,178,0,100)];
+
+
+export const INITX:number = -10;
+export const INITZ:number = 10.2;
+export const PERX:number = 1.966;
+export const PERZ:number = 1.6;
+
+
 
 /** 当行，双行多一般position,0,+1 */
 export var INITDATA:number[][] = [
@@ -31,9 +49,38 @@ export class GameData implements IGameData {
 
     private columns:number = 0;             // 列有多少列
     private rows:number = 0;                // 行有多少行
+
+
+    private fireNodeColor:BALLCOLOR;
+
+    private backNodeColor:BALLCOLOR
     constructor() {
         this.groupMgr = new GroupMgr();
         this.devideGroup();
+    }
+
+    createAFireNode() {
+        let color:number = Math.ceil(Math.random() * 3);
+        this.fireNodeColor = color;
+        return color;
+    }
+
+    getFireValue() {
+        return this.fireNodeColor;
+    }
+
+    getFireColor():Color {
+        let index:number = this.fireNodeColor;
+        if(index < 0) {
+            index = 0;
+        }
+        return TEMPCOLORS[index];
+    }
+
+    createABackNode() {
+        let color:number = Math.ceil(Math.random() * 3);
+        this.backNodeColor = color;
+        return color;
     }
     devideGroup(): void {
         // 把数据划分为堆, 堆指的的抱团的一堆...

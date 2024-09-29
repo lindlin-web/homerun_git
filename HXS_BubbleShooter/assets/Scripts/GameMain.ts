@@ -25,7 +25,7 @@ export class GameMain extends Component {
 
     private gameData:IGameData;
 
-    
+
     start() {
         this.gameData = new GameData();
         let initData = this.gameData.getInitData();
@@ -42,7 +42,28 @@ export class GameMain extends Component {
         this._grid.setEndNode(0, 8);
         this.drawGrid();
         this.findPath();
+    }
 
+    reDraw() {
+        this.father.removeAllChildren();
+        this.nodes = [];
+        //this.gameData = new GameData();
+        this.gameData.devideGroup();
+        let initData = this.gameData.getInitData();
+        let columns = initData.length;
+        let rows = 0;
+        for(let i = 0; i < columns; i++) {
+            let length = initData[i].length;
+            if(length > rows) {
+                rows = length;
+            }
+        }
+        this._grid = new Grid(columns, rows,initData);
+        this._grid.setStartNode(0, 1);
+        this._grid.setEndNode(0, 8);
+        this.drawGrid();
+        this.findPath();
+        this.getGroup();
     }
 
     
@@ -99,26 +120,26 @@ export class GameMain extends Component {
         
     }
 
-    // getGroup() {
-    //     for(let i = 0; i < this._grid.getNumCols(); i++) {
-    //         for(let j = 0; j < this._grid.getNumRows(); j++) {
-    //             let bo = this.gameData.getIsGroup(i, j);
-    //             if(bo) {
-    //                 let gv:number = this.gameData.getGroupNum(i, j);
-    //                 let pre:Prefab = this.groupsPre[gv];
-    //                 let node = this.nodes[i][j];
-    //                 if(!node) {
-    //                     console.log(i,"==", j, "============");
-    //                     continue;
-    //                 }
-    //                 let pos:Vec3 = node.getPosition();
-    //                 let temp = instantiate(pre);
-    //                 temp.setPosition(pos);
-    //                 this.father.addChild(temp);
-    //             }
-    //         }
-    //     }
-    // }
+    getGroup() {
+        for(let i = 0; i < this._grid.getNumCols(); i++) {
+            for(let j = 0; j < this._grid.getNumRows(); j++) {
+                let bo = this.gameData.getIsGroup(i, j);
+                if(bo) {
+                    let gv:number = this.gameData.getGroupNum(i, j);
+                    let pre:Prefab = this.groupsPre[gv];
+                    let node = this.nodes[i][j];
+                    if(!node) {
+                        console.log(i,"==", j, "============");
+                        continue;
+                    }
+                    let pos:Vec3 = node.getPosition();
+                    let temp = instantiate(pre);
+                    temp.setPosition(pos);
+                    this.father.addChild(temp);
+                }
+            }
+        }
+    }
 }
 
 

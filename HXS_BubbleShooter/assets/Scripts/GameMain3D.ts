@@ -1,10 +1,13 @@
-import { _decorator, Component, instantiate, Touch, Node, Prefab, systemEvent, SystemEventType, v3, Vec3, Camera, PhysicsSystem, Mat4, NodePool, Color, color, v2, Vec2, Vec4, v4, tween } from 'cc';
+import { _decorator, Component, instantiate, Touch, Node, Prefab, systemEvent, SystemEventType, v3, Vec3, Camera, PhysicsSystem, Mat4, NodePool, Color, color, v2, Vec2, Vec4, v4, tween, setPropertyEnumType, utils } from 'cc';
 import { IGameData } from './data/IGameData';
 import { BALLCOLOR, GameData, INITX, INITZ, PERX, PERZ } from './data/GameData';
 import { Grid } from './AStar/Grid';
 import { OpacityLind3D } from './wig/OpacityLind3D';
 import { SEARCHDIRECTION } from './data/GroupMgr';
 import { Util } from './util/Util';
+import { AppNotify, NotifyMgrCls } from './controller/AppNotify';
+import { GameMain } from './GameMain';
+import { DropingNode } from './wig/DropingNode';
 const { ccclass, property } = _decorator;
 
 
@@ -14,6 +17,8 @@ const enum LEFTORRIGHT {
     LEFT= 0,
     RIGHT=1
 }
+
+const SPEED:number = 60;            // 速度..
 
 const OBJCOLOR = {
     "BLUE":color(0,82,255,100),
@@ -61,8 +66,17 @@ export class GameMain3D extends Component {
     
     private firingNode:Node = null;
 
+    @property(GameMain)
+    theGameMain:GameMain;
+
+    @property(Node)
+    operator:Node;
+
     protected onLoad(): void {
         
+        NotifyMgrCls.getInstance().observe(AppNotify.INSERTBUBBLEDONE, this.onInsertBubbleDone.bind(this));
+        NotifyMgrCls.getInstance().observe(AppNotify.DELETEBUBBLEDONE, this.onDeleteBubbleDone.bind(this));
+        NotifyMgrCls.getInstance().observe(AppNotify.DROPBUBBLEDONE, this.onDropBubbleDone.bind(this));
         this.dotNodePool = new NodePool();
 
         this.gameData = new GameData();
@@ -83,8 +97,82 @@ export class GameMain3D extends Component {
 
         this.fireNode = this.createAFireNode();
         this.fireNode.setScale(v3(1.3,1.3,1.3));
-        this.node.addChild(this.fireNode);
+        this.operator.addChild(this.fireNode);
         this.fireNode.setPosition(this.FIREPOINT);
+    }
+
+    onDropBubbleDone(vecs:Vec2[]) {
+        for(let i = 0; i < vecs.length; i++) {
+            let vec = vecs[i];
+            let node = this.nodes[vec.x][vec.y];
+            if(!node) {
+                console.log("==========肯定是有错误的");
+                return;
+            }
+            node.getComponent(DropingNode).doDroping();
+            tween(node).delay(1).call(()=>{
+                node.removeAllChildren();
+                node.removeFromParent();
+                node.destroy();
+                node = null;
+                this.nodes[vec.x][vec.y] = null;
+            }).start();
+            for(let j = 0; j < node.children.length; j++) {
+                let dropNode = node.children[j].getComponent(DropingNode);
+                if(dropNode) {
+                    dropNode.doDroping();
+                }
+            }
+        }
+        this.scheduleOnce(()=>{
+            this.gameData.checkToSupport();     // 看看是否还有可以补给..
+        }, 1);
+        
+    }
+
+    onDeleteBubbleDone(vecs:Vec2[]) {
+        for(let i = 0; i < vecs.length; i++) {
+            let vec = vecs[i];
+            let node = this.nodes[vec.x][vec.y];
+            if(!node) {
+                console.log("==========肯定是有错误的");
+                return;
+            }
+            node.removeFromParent();
+            node.destroy();
+            node = null;
+            this.nodes[vec.x][vec.y] = null;
+        }
+
+        this.checkDrop();
+    }
+
+    /*** 数据通知，已经在列 行中插入了一个bubble了 */
+    onInsertBubbleDone(column:number, row:number):void {
+        let val = this.gameData.getValueByColumnAndRow(column,row);
+        let node = this.createNodeByValue(val);
+        this.node.addChild(node);
+        this.nodes[column][row] = node;
+        let pos:Vec3 = this.gameData.getPositionByColumnAndRow(column, row);
+        node.setPosition(pos);
+        this.checkGrid(column, row);
+        //this.theGameMain.reDraw();
+        
+    }
+
+    /** 需要做的掉落有那些的 */
+    checkDrop() {
+        this.gameData.checkTheDropThing();         // 判断那些会被掉落下来...
+    }
+
+    checkGrid(column:number, row:number){
+        this.gameData.devideGroup();
+        let groupVal = this.gameData.getGroupNum(column, row);
+        let numOfGroup = this.gameData.howManyGoupMember(groupVal);
+        if(numOfGroup > 1) {
+            console.log("==========需要删除掉", numOfGroup);
+            this.gameData.needDeleteGroup(groupVal);
+        }
     }
 
     drawGrid():void {
@@ -94,31 +182,29 @@ export class GameMain3D extends Component {
                 let myNode = this._grid.getNode(i, j);
                 let val = myNode.value;
                 let pre:Prefab = this.prefabs[0]
-                
                 if(val == -1) {
+                    this.nodes[i][j] = null;
                     continue;
                 }
                 let node = this.createNodeByValue(val);
+                
                 this.node.addChild(node);
                 this.nodes[i][j] = node;
-                let gap = 1;
-                if(j % 2 == 0) {
-                    gap = 0;
-                } 
-                let pos:Vec3 = this.getPositionByColumnAndRow(i, j);
+                let pos:Vec3 = this.gameData.getPositionByColumnAndRow(i, j);
                 node.setPosition(pos);
+                let num = Math.ceil(Math.random() * 9);
+                for(let k = 0; k < num; k++) {
+                    let temp = this.createNodeByValue(val);
+                    temp.setRotationFromEuler(v3(0,60,0));
+                    node.addChild(temp);
+                    temp.setPosition(0, pos.y + 0.25 * k,0);
+                }
             }
         }
     }
 
-    getPositionByColumnAndRow(column:number, row:number):Vec3 {
-        let gap = 1;
-        if(row % 2 == 0) {
-            gap = 0;
-        } 
-        let pos:Vec3 = v3(INITX +column*PERX +gap,0.1, INITZ - row * PERZ);
-        return pos;
-    }
+
+
 
     /** 获得那个最佳的碰撞的节点, 1 距离, 2 左边还是右边, 3 column  4. row */
     getTheMostHitOne(gap:Vec3):Vec4 {
@@ -161,6 +247,22 @@ export class GameMain3D extends Component {
                     let gapZ = Math.abs(this.FIREPOINT.z - z0);
                     let realDistance = Math.sqrt(gapX * gapX + gapZ * gapZ);
                     if(realDistance < mostShortDistance) {
+
+                        direction = this.whichAngleYouHit(gap,i,j,distance,realDistance);
+                        if(direction < 0) {
+                        }
+                        let temp:Vec2 = Util.getColumnAndRowByDirection(i, j, direction);
+                        let occupied:boolean = this.gameData.getValueByColumnAndRow(temp.x, temp.y) != -1;
+
+                        if(occupied) {
+                            direction = this.secondCheck(direction,i, j, v2(gap.x,gap.z));
+                            temp = Util.getColumnAndRowByDirection(i,j,direction);
+                            occupied =  this.gameData.getValueByColumnAndRow(temp.x, temp.y) != -1;
+                            if(occupied) {
+                                continue;
+                            }
+                        }
+
                         mostShortDistance = realDistance;
                         mostRealDistance = distance;
                         targetI = i;
@@ -171,47 +273,14 @@ export class GameMain3D extends Component {
         }
 
         if(targetI >= 0 && targetJ >= 0) {
-            let ggap = Math.sqrt(this.radius * this.radius - mostRealDistance * mostRealDistance);
-            let dog = Math.sqrt(mostShortDistance * mostShortDistance - mostRealDistance * mostRealDistance);
-            dog = dog - ggap;
+            direction = this.whichAngleYouHit(gap,targetI,targetJ,mostRealDistance, mostShortDistance);
+            let temp:Vec2 = Util.getColumnAndRowByDirection(targetI, targetJ, direction);
+            let occupied:boolean = this.gameData.getValueByColumnAndRow(temp.x, temp.y) != -1;
 
-            let hitPoint = v2(this.FIREPOINT.x + gap.x * dog, this.FIREPOINT.z + gap.z * dog);
-            let position = this.nodes[targetI][targetJ].getPosition();
-            let final = v2(hitPoint.x - position.x, hitPoint.y - position.z);
-            final = final.normalize();
-            let angle = Math.atan2(final.y, final.x) * 180 / Math.PI;
-            if(angle <= 0) {
-                angle += 360;
-            }
-            if(angle >= 340 && angle <= 20) {
-                direction = SEARCHDIRECTION.RIGHT;
-                console.log("============碰到了右边");
-                console.log(v4(mostShortDistance,direction,targetI, targetJ));
-            }
-            else if(angle >= 20 && angle <= 90) {
-                direction = SEARCHDIRECTION.DOWNRIGHT;
-                console.log("==============碰到了右下");
-                console.log(v4(mostShortDistance,direction,targetI, targetJ));
-            }
-            else if(angle >= 90 && angle <= 160) {
-                direction = SEARCHDIRECTION.DOWNLEFT
-                console.log("===============碰到了左下");
-                console.log(v4(mostShortDistance,direction,targetI, targetJ));
-            }
-            else if(angle >= 160 && angle <= 180) {
-                direction = SEARCHDIRECTION.LEFT;
-                console.log("==================左边");
-                console.log(v4(mostShortDistance,direction,targetI, targetJ));
-            }
-            else if(angle >= 180 && angle <= 270) {
-                direction = SEARCHDIRECTION.UPLEFT;
-                console.log("=================左上");
-                console.log(v4(mostShortDistance,direction,targetI, targetJ));
-            }
-            else if(angle >= 270 && angle <= 340) {
-                direction = SEARCHDIRECTION.UPRIGHT;
-                console.log("=================右上");
-                console.log(v4(mostShortDistance,direction,targetI, targetJ));
+            if(occupied) {
+                direction = this.secondCheck(direction,targetI, targetJ, v2(gap.x,gap.z));
+                temp = Util.getColumnAndRowByDirection(targetI,targetJ,direction);
+                occupied =  this.gameData.getValueByColumnAndRow(temp.x, temp.y) != -1;
             }
         }
         return v4(mostShortDistance,direction,targetI, targetJ);
@@ -276,8 +345,23 @@ export class GameMain3D extends Component {
             let offsetX = result.z;
             let offsetY = result.w;
             let temp = Util.getColumnAndRowByDirection(offsetX, offsetY, hitPosition);
-            console.log(temp, "===========");
+            if(temp.x < 0) {
+                console.log("========hello world");
+            }
+            this.firingNode = this.recreateAFireNode();
+            this.node.addChild(this.firingNode);
+            this.firingNode.setPosition(this.FIREPOINT);
 
+            let targetPosition:Vec3 = this.gameData.getPositionByColumnAndRow(temp.x, temp.y);
+
+            let distance:number = Vec3.distance(targetPosition, this.FIREPOINT);
+            let time = distance / SPEED;
+            tween(this.firingNode).to(time, {position:targetPosition}).call(()=>{
+                this.gameData.insertAFiringNode(temp.x, temp.y);
+                this.firingNode.removeFromParent();
+                this.firingNode.destroy();
+                this.firingNode = null;
+            }).start();
 
         } else {
             console.log("=========没有被击中============");
@@ -360,7 +444,10 @@ export class GameMain3D extends Component {
 
     private createNodeByValue(val:number) {
         let pre:Prefab = this.prefabs[0]
-        if(val == 1) {
+        if(val == -1) {
+            pre = this.prefabs[3];
+        }
+        else if(val == 1) {
             pre = this.prefabs[0];
         } else if(val == 2) {
             pre = this.prefabs[1];
@@ -369,6 +456,118 @@ export class GameMain3D extends Component {
         }
         let node = instantiate(pre);
         return node;
+    }
+
+
+    private whichAngleYouHit(gap:Vec3,targetI:number, targetJ:number, mostRealDistance:number, mostShortDistance:number) {
+        let direction = -1;
+        let ggap = Math.sqrt(this.radius * this.radius - mostRealDistance * mostRealDistance);
+        let dog = Math.sqrt(mostShortDistance * mostShortDistance - mostRealDistance * mostRealDistance);
+        dog = dog - ggap;
+
+        let hitPoint = v2(this.FIREPOINT.x + gap.x * dog, this.FIREPOINT.z + gap.z * dog);
+        let position = this.nodes[targetI][targetJ].getPosition();
+        let final = v2(hitPoint.x - position.x, hitPoint.y - position.z);
+        final = final.normalize();
+        let angle = Math.atan2(final.y, final.x) * 180 / Math.PI;
+        if(angle <= 0) {
+            angle += 360;
+        }
+        if(angle >= 300 || angle <= 40) {
+            direction = SEARCHDIRECTION.RIGHT;
+            console.log("============碰到了右边");
+        }
+        else if(angle >= 20 && angle <= 90) {
+            direction = SEARCHDIRECTION.DOWNRIGHT;
+            console.log("==============碰到了右下");
+        }
+        else if(angle >= 90 && angle <= 160) {
+            direction = SEARCHDIRECTION.DOWNLEFT
+            console.log("===============碰到了左下");
+        }
+        else if(angle >= 160 && angle <= 180) {
+            direction = SEARCHDIRECTION.LEFT;
+            console.log("==================左边");
+        }
+        else if(angle >= 180 && angle <= 270) {
+            direction = SEARCHDIRECTION.UPLEFT;
+            console.log("=================左上");
+        }
+        else if(angle >= 270 && angle <= 300) {
+            direction = SEARCHDIRECTION.UPRIGHT;
+            console.log("=================右上");
+        }
+        return direction;
+    }
+
+
+    secondCheck(direction:SEARCHDIRECTION,column:number, row:number,speed:Vec2) {
+
+        if(direction == SEARCHDIRECTION.RIGHT) {
+            direction = SEARCHDIRECTION.DOWNRIGHT;
+            let temp:Vec2 = Util.getColumnAndRowByDirection(column, row, direction);
+            let occupied:boolean = this.gameData.getValueByColumnAndRow(temp.x, temp.y) != -1;
+            if(occupied) {
+                direction = SEARCHDIRECTION.UPRIGHT;
+                temp = Util.getColumnAndRowByDirection(column, row, direction);
+                occupied = this.gameData.getValueByColumnAndRow(temp.x, temp.y) != -1;
+            }
+        }
+        else if(direction == SEARCHDIRECTION.LEFT) {
+            direction = SEARCHDIRECTION.DOWNLEFT;
+            let temp:Vec2 = Util.getColumnAndRowByDirection(column, row, direction);
+            let occupied:boolean = this.gameData.getValueByColumnAndRow(temp.x, temp.y) != -1;
+            if(occupied) {
+                direction = SEARCHDIRECTION.UPLEFT;
+                temp = Util.getColumnAndRowByDirection(column, row, direction);
+                occupied = this.gameData.getValueByColumnAndRow(temp.x, temp.y) != -1;
+            }
+        }
+        else if(direction == SEARCHDIRECTION.DOWNLEFT) {
+            if(speed.x > 0) {
+                direction = SEARCHDIRECTION.LEFT;
+                let temp:Vec2 = Util.getColumnAndRowByDirection(column, row, direction);
+                let occupied:boolean = this.gameData.getValueByColumnAndRow(temp.x, temp.y) != -1;
+                if(occupied) {
+                    direction = SEARCHDIRECTION.DOWNRIGHT;
+                    temp = Util.getColumnAndRowByDirection(column, row, direction);
+                    occupied = this.gameData.getValueByColumnAndRow(temp.x, temp.y) != -1;
+                }
+            }
+            else {
+                direction = SEARCHDIRECTION.DOWNRIGHT;
+                let temp:Vec2 = Util.getColumnAndRowByDirection(column, row, direction);
+                let occupied:boolean = this.gameData.getValueByColumnAndRow(temp.x, temp.y) != -1;
+                if(occupied) {
+                    direction = SEARCHDIRECTION.DOWNRIGHT;
+                    temp = Util.getColumnAndRowByDirection(column, row, direction);
+                    occupied = this.gameData.getValueByColumnAndRow(temp.x, temp.y) != -1;
+                }
+            }
+        }
+        else if(direction == SEARCHDIRECTION.DOWNRIGHT) {
+            if(speed.x > 0) {
+                direction = SEARCHDIRECTION.DOWNLEFT;
+                let temp:Vec2 = Util.getColumnAndRowByDirection(column, row, direction);
+                let occupied:boolean = this.gameData.getValueByColumnAndRow(temp.x, temp.y) != -1;
+                if(occupied) {
+                    direction = SEARCHDIRECTION.DOWNLEFT;
+                    temp = Util.getColumnAndRowByDirection(column, row, direction);
+                    occupied = this.gameData.getValueByColumnAndRow(temp.x, temp.y) != -1;
+                }
+            }
+            else {
+                direction = SEARCHDIRECTION.RIGHT;
+                let temp:Vec2 = Util.getColumnAndRowByDirection(column, row, direction);
+                let occupied:boolean = this.gameData.getValueByColumnAndRow(temp.x, temp.y) != -1;
+                if(occupied) {
+                    direction = SEARCHDIRECTION.DOWNLEFT;
+                    temp = Util.getColumnAndRowByDirection(column, row, direction);
+                    occupied = this.gameData.getValueByColumnAndRow(temp.x, temp.y) != -1;
+                }
+            }
+        }
+        return direction;
     }
 }
 

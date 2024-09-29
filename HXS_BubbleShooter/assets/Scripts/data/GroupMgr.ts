@@ -86,6 +86,10 @@ export class GroupMgr {
         return retVal;
     }
 
+    public getGroupValues():number[] {
+        return this.groups;
+    }
+
 
     /** 在所有的节点中，寻找BallNode */
     private findBallNodesInRef(column:number, row:number):BallNode {

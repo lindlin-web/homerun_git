@@ -76,4 +76,9 @@ export class Util {
         }
         return targetBallNode;
     }
+
+    /** 碰撞到了那个角度，那个面 */
+    public static whichAngleYouHit(){
+
+    }
 }

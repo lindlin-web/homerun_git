@@ -1,4 +1,4 @@
-import { _decorator, Component, instantiate, Touch, Node, Prefab, systemEvent, SystemEventType, v3, Vec3, Camera, PhysicsSystem, Mat4, NodePool, Color, color, v2, Vec2, Vec4, v4, tween, setPropertyEnumType, utils } from 'cc';
+import { _decorator, Component, instantiate, Touch, Node, Prefab, systemEvent, SystemEventType, v3, Vec3, Camera, PhysicsSystem, Mat4, NodePool, Color, color, v2, Vec2, Vec4, v4, tween,screen, setPropertyEnumType, utils } from 'cc';
 import { IGameData } from './data/IGameData';
 import { BALLCOLOR, GameData, INITX, INITZ, PERX, PERZ } from './data/GameData';
 import { Grid } from './AStar/Grid';
@@ -8,6 +8,8 @@ import { Util } from './util/Util';
 import { AppNotify, NotifyMgrCls } from './controller/AppNotify';
 import { GameMain } from './GameMain';
 import { DropingNode } from './wig/DropingNode';
+import { OperateNode } from './wig/OperateNode';
+import { TailPage } from './TailPage';
 const { ccclass, property } = _decorator;
 
 
@@ -18,7 +20,7 @@ const enum LEFTORRIGHT {
     RIGHT=1
 }
 
-const SPEED:number = 60;            // 速度..
+let SPEED:number = 60;            // 速度..
 
 const OBJCOLOR = {
     "BLUE":color(0,82,255,100),
@@ -43,7 +45,8 @@ export class GameMain3D extends Component {
     private mainCamera:Camera = null;           // 镜头信息...
 
 
-    private FIREPOINT:Vec3 = v3(0, 0.1, 18);
+    private convertFirePoint:Vec3 = v3(0, 0.1, 18);
+
     @property(Prefab)
     dotNode:Prefab = null;          // 就是那个点虚线的预制体...
 
@@ -72,7 +75,15 @@ export class GameMain3D extends Component {
     @property(Node)
     operator:Node;
 
+    public static totalDeleteRow:number = 0;          // 总共删除了多少行..
+
+    private theFakeNodes:Node[] = [];               // 尾巴的 用来显示用的几个节点。...
+
+
+    private canShoot:boolean = true;               // 可以射击...
+
     protected onLoad(): void {
+        
         
         NotifyMgrCls.getInstance().observe(AppNotify.INSERTBUBBLEDONE, this.onInsertBubbleDone.bind(this));
         NotifyMgrCls.getInstance().observe(AppNotify.DELETEBUBBLEDONE, this.onDeleteBubbleDone.bind(this));
@@ -96,15 +107,29 @@ export class GameMain3D extends Component {
         this.drawGrid();
 
         this.fireNode = this.createAFireNode();
+        this.fireNode.name = "FireBoy";
         this.fireNode.setScale(v3(1.3,1.3,1.3));
+        this.backupNode = this.createABackNode();
         this.operator.addChild(this.fireNode);
-        this.fireNode.setPosition(this.FIREPOINT);
+        this.operator.addChild(this.backupNode);
+        this.fireNode.setPosition(this.operator.getComponent(OperateNode).firePosition);
+        this.backupNode.setPosition(this.operator.getComponent(OperateNode).backPosition);
+
+        
+        screen.on("window-resize", this.onWindowResize.bind(this), this);
+        let size = screen.windowSize;
+        this.onWindowResize(size.width, size.height);
     }
 
     onDropBubbleDone(vecs:Vec2[]) {
+        console.log(vecs, "=============drops============");
+
+        console.log("=============before front drop");
+        this.printLog(true);
         for(let i = 0; i < vecs.length; i++) {
             let vec = vecs[i];
             let node = this.nodes[vec.x][vec.y];
+            this.nodes[vec.x][vec.y] = null;
             if(!node) {
                 console.log("==========肯定是有错误的");
                 return;
@@ -124,13 +149,121 @@ export class GameMain3D extends Component {
                 }
             }
         }
+        console.log("=================after front drop");
+        this.printLog(true);
         this.scheduleOnce(()=>{
-            this.gameData.checkToSupport();     // 看看是否还有可以补给..
+            // 基本上，删除的行， 和 补给的行是一样的..
+            let deleteAndSupport:Vec2 = this.gameData.checkToSupport();     // 看看是否还有可以补给..
+
+            console.log("===================how many support ====", deleteAndSupport.y);
+            console.log("====================before front support");
+            this.printLog(true);
+            // 这个地方，还必须把this.nodes里面对应的数据给清空一下...
+            for(let i = 0; i < deleteAndSupport.y; i++) {
+                
+                for(let j = 0; j < this.nodes.length; j++) {
+                    let nodes = this.nodes[j];
+                    nodes.shift();
+                }
+            }
+            console.log("====================after front support");
+            this.printLog(true);
+
+            GameMain3D.totalDeleteRow += deleteAndSupport.y;
+
+            this.doTheSupport(deleteAndSupport.y);                // 添加供给进去....
+
         }, 1);
+    }
+
+    /** 把供给填充进去 */
+    doTheSupport(support:number) {
+        let SUPPORTDATA = this.gameData.getSupport();
+        for(let i = 0; i < support; i++) {
+            for(let j = 0; j < SUPPORTDATA.length; j++) {
+                let val = SUPPORTDATA[j][i];
+                if(val == -1) {
+                    this.nodes[j][this.nodes[j].length] = null;
+                    continue;
+                }
+                let node = this.createNodeByValue(val);
+                this.node.addChild(node);
+                this.nodes[j].push(node);
+                let pos:Vec3 = this.gameData.getPositionByColumnAndRow(j,this.nodes[j].length - 1, GameMain3D.totalDeleteRow);
+                node.setPosition(pos);
+                let num = Math.ceil(Math.random() * 4);
+                for(let k = 0; k < num; k++) {
+                    let temp = this.createNodeByValue(val);
+                    temp.setRotationFromEuler(v3(0,60,0));
+                    node.addChild(temp);
+                    temp.setPosition(0, pos.y + 0.25 * k,-0.01 * k);
+                }
+            }
+        }
+
         
+
+        this.gameData.deleteTheSupportByRow(support);           // 供给上，删除对应的行...
+
+        if(support > 0) {
+            this.doTheMoving(support);
+        } else {
+            this.checkIsEqual();
+            this.canShoot = true;
+            this.printLog(false);
+
+
+        }
+    }
+
+    /** 然后做一下移动 */
+    doTheMoving(rowNum:number) {
+
+        let SUPPORTDATA = this.gameData.getSupport();
+        for(let i = this.theFakeNodes.length - 1; i >= 0; i--) {
+            let node = this.theFakeNodes[i];
+            node.removeFromParent();
+        }
+
+        this.theFakeNodes = [];
+        for(let i = 0; i < SUPPORTDATA.length; i++) {
+            let val = SUPPORTDATA[i][0];
+            if(val !=undefined && val != -1) {
+                let node = this.createNodeByValue(val);
+                this.node.addChild(node);
+                this.theFakeNodes.push(node);
+                let pos:Vec3 = this.gameData.getPositionByColumnAndRow(i,this.nodes[0].length, GameMain3D.totalDeleteRow);
+                node.setPosition(pos);
+            }
+        }
+
+        let original = this.node.getPosition();
+        let pos = v3(original.x,original.y,original.z + PERZ * rowNum);
+
+        tween(this.node).to(0.1, {position:v3(original.x,original.y,original.z-0.2)}).to(0.1,{
+            position:v3(pos.x,pos.y,pos.z+0.2)
+        }).to(0.2, {position:pos}).call(()=>{
+            this.node.setPosition(pos);
+
+            let matrix = this.node.getWorldMatrix();
+            let tempMat4 = new Mat4();
+            Mat4.invert(tempMat4, matrix);
+            let tempPos:Vec3 = v3(0,0,0);
+            this.operator.getChildByName("FireBoy").getWorldPosition(tempPos);
+            Vec3.transformMat4(this.convertFirePoint, tempPos, tempMat4);
+
+
+
+            this.checkIsEqual();
+            this.canShoot = true;
+            this.printLog(false);
+        }).start();
     }
 
     onDeleteBubbleDone(vecs:Vec2[]) {
+
+        console.log("==========before front delete=========");
+        this.printLog(true);
         for(let i = 0; i < vecs.length; i++) {
             let vec = vecs[i];
             let node = this.nodes[vec.x][vec.y];
@@ -144,35 +277,89 @@ export class GameMain3D extends Component {
             this.nodes[vec.x][vec.y] = null;
         }
 
-        this.checkDrop();
+        console.log("==========afgter front delete=========");
+        this.printLog(true);
+
+        this.checkIsEqual();
+
+        let bo:boolean = this.checkDrop();
+        if(bo) {
+            this.canShoot = true;
+        }
+
+    }
+
+    showFinalPage() {
+        TailPage.Instance.onShowPage();
     }
 
     /*** 数据通知，已经在列 行中插入了一个bubble了 */
     onInsertBubbleDone(column:number, row:number):void {
+
+        if(row < 0) {
+            this.showFinalPage();
+            return;
+        }
         let val = this.gameData.getValueByColumnAndRow(column,row);
         let node = this.createNodeByValue(val);
         this.node.addChild(node);
+        console.log('==============begin front insert===============');
+        this.printLog(true);
         this.nodes[column][row] = node;
-        let pos:Vec3 = this.gameData.getPositionByColumnAndRow(column, row);
+        console.log('==================after insert=================');
+        this.printLog(true);
+        let pos:Vec3 = this.gameData.getPositionByColumnAndRow(column, row,GameMain3D.totalDeleteRow);
         node.setPosition(pos);
-        this.checkGrid(column, row);
+        let bo = this.checkGrid(column, row);
         //this.theGameMain.reDraw();
-        
+
+        /** 就是把备用的，变成正式的节点 */
+        this.changeCircle();
+        if(bo) {
+            this.scheduleOnce(()=>{
+                this.canShoot = true;
+            },0.2);
+        }
+
+    }
+
+    changeCircle() {
+        this.gameData.changeTheCircle();                // 备用的变成正式的， 然后 产生一个备用的.
+
+
+        let temp = this.fireNode;
+        this.fireNode = this.backupNode;
+        this.backupNode = temp;
+
+        this.backupNode.removeFromParent();
+        this.backupNode.destroy();
+        this.backupNode = null;
+
+        this.backupNode = this.doBackNode();
+        this.operator.addChild(this.backupNode);
+        this.backupNode.setPosition(this.operator.getComponent(OperateNode).firePosition);
+        this.backupNode.setScale(v3(1.3,1.3,1.3));
+
+        this.operator.getComponent(OperateNode).setFireNode(this.fireNode);
+        this.operator.getComponent(OperateNode).setBackNode(this.backupNode);
+        this.operator.getComponent(OperateNode).doCircleThing();
     }
 
     /** 需要做的掉落有那些的 */
     checkDrop() {
-        this.gameData.checkTheDropThing();         // 判断那些会被掉落下来...
+        return this.gameData.checkTheDropThing();         // 判断那些会被掉落下来...
     }
 
     checkGrid(column:number, row:number){
         this.gameData.devideGroup();
         let groupVal = this.gameData.getGroupNum(column, row);
         let numOfGroup = this.gameData.howManyGoupMember(groupVal);
+        let retVal:boolean = true;
         if(numOfGroup > 1) {
-            console.log("==========需要删除掉", numOfGroup);
+            retVal = false;
             this.gameData.needDeleteGroup(groupVal);
         }
+        return retVal;
     }
 
     drawGrid():void {
@@ -190,17 +377,32 @@ export class GameMain3D extends Component {
                 
                 this.node.addChild(node);
                 this.nodes[i][j] = node;
-                let pos:Vec3 = this.gameData.getPositionByColumnAndRow(i, j);
+                let pos:Vec3 = this.gameData.getPositionByColumnAndRow(i, j,GameMain3D.totalDeleteRow);
                 node.setPosition(pos);
-                let num = Math.ceil(Math.random() * 9);
+                let num = Math.ceil(Math.random() * 4);
                 for(let k = 0; k < num; k++) {
                     let temp = this.createNodeByValue(val);
                     temp.setRotationFromEuler(v3(0,60,0));
                     node.addChild(temp);
-                    temp.setPosition(0, pos.y + 0.25 * k,0);
+                    temp.setPosition(0, pos.y + 0.25 * k,-0.1 * k);
                 }
             }
         }
+
+        for(let i :number = 0; i < this._grid.getNumCols(); i++) {
+            let val:number = this.gameData.getSupport()[i][0];
+            let pre:Prefab = this.prefabs[0];
+            if(val == -1) {
+                continue;
+            }
+            let node = this.createNodeByValue(val);
+            this.node.addChild(node);
+            let pos:Vec3 = this.gameData.getPositionByColumnAndRow(i,this._grid.getNumRows(), GameMain3D.totalDeleteRow);
+            node.setPosition(pos);
+            this.theFakeNodes.push(node);
+        }
+
+
     }
 
 
@@ -220,10 +422,10 @@ export class GameMain3D extends Component {
         let direction:number = -1;
         let A = -kz;
         let B = kx;
-        let C = kz * (this.FIREPOINT.x) - this.FIREPOINT.z * kx;
+        let C = kz * (this.convertFirePoint.x) - this.convertFirePoint.z * kx;
 
         let square = Math.sqrt(A*A + B * B);
-        let mostShortDistance = 40;
+        let mostShortDistance = 120;
         let mostRealDistance = 0;       // 最近的那个的射线与圆的距离...
         let targetI = -1;
         let targetJ = -1;
@@ -232,8 +434,11 @@ export class GameMain3D extends Component {
             let column = this.nodes[i];
             for(let j = 0; j < column.length; j++) {
                 let node = column[j];
-                if(!node) {
+                if(!node || !node.isValid) {
                     continue;
+                }
+                if(!node) {
+                    console.log("===========how come=================");
                 }
                 let pos = node.getPosition();
                 let x0 = pos.x;
@@ -243,8 +448,8 @@ export class GameMain3D extends Component {
                 distance = distance / square;
                 if(distance < this.radius) {
                     // 如果小于半径，说明，已经是发生了碰撞了... 这个时候还需要再计算一下最近的那个...
-                    let gapX = Math.abs(this.FIREPOINT.x - x0);
-                    let gapZ = Math.abs(this.FIREPOINT.z - z0);
+                    let gapX = Math.abs(this.convertFirePoint.x - x0);
+                    let gapZ = Math.abs(this.convertFirePoint.z - z0);
                     let realDistance = Math.sqrt(gapX * gapX + gapZ * gapZ);
                     if(realDistance < mostShortDistance) {
 
@@ -262,7 +467,6 @@ export class GameMain3D extends Component {
                                 continue;
                             }
                         }
-
                         mostShortDistance = realDistance;
                         mostRealDistance = distance;
                         targetI = i;
@@ -302,27 +506,72 @@ export class GameMain3D extends Component {
 
             // out 就是点击的位置，已经转换为我的本地坐标了。。。。。
 
-            let sub = this.myGap = out.subtract(this.FIREPOINT).normalize();
+            let sub = this.myGap = out.subtract(this.convertFirePoint).normalize();
             result =this.getTheMostHitOne(sub);
             let distance = result.x;
             this.createDotLine(sub, distance);
         }
         return result;
     }
+
+    onWindowResize(width:number, height:number) {
+        if(width > height) {
+            this.mainCamera.fov = 45;
+            this.node.setPosition(v3(0, 0, 0));
+            this.operator.setPosition(v3(0, 0,0));
+            SPEED = 60;
+        } else {
+            this.mainCamera.fov = 80;
+            this.node.setPosition(v3(0, 0, -13.7));
+            this.operator.setPosition(v3(0,0,13.7));
+            SPEED = 160;
+        }
+        let original:Vec3 = v3(0, 0, 0);
+        this.node.getPosition(original);
+        this.node.setPosition(v3(original.x,original.y,original.z + PERZ * GameMain3D.totalDeleteRow));
+
+        let matrix = this.node.getWorldMatrix();
+        let tempMat4 = new Mat4();
+        Mat4.invert(tempMat4, matrix);
+        let tempPos:Vec3 = v3(0,0,0);
+        this.operator.getChildByName("FireBoy").getWorldPosition(tempPos);
+        Vec3.transformMat4(this.convertFirePoint, tempPos, tempMat4);
+
+        console.log(this.convertFirePoint, "====================this.convertFirePoint");
+
+    }
+    
     
     start() {
+
+        
+
+
         systemEvent.on(SystemEventType.TOUCH_START, (touch:Touch) => {
+            if(!this.canShoot) {
+                return;
+            }
             this.isClickOn = true;
             this.doTheTouchThing(touch);
         }, this);
         
         systemEvent.on(SystemEventType.TOUCH_MOVE, (touch:Touch) =>{
+            if(!this.canShoot) {
+                return;
+            }
             if(this.isClickOn) {
                 this.doTheTouchThing(touch);
             }
         });
 
         systemEvent.on(SystemEventType.TOUCH_END, (touch:Touch)=>{
+            if(!this.canShoot) {
+                return;
+            }
+            if(!this.isClickOn) {
+                return;
+            }
+            this.canShoot = false;
             this.isClickOn = false;
 
             let result = this.doTheTouchThing(touch);
@@ -334,6 +583,38 @@ export class GameMain3D extends Component {
             // 回收虚线...
             this.recycleDot();
         });
+    }
+
+    printLog(bo:boolean) {
+        if(bo) {
+            let str:string = "";
+            for(let i = 0; i < this.nodes.length; i++) {
+                for(let j = 0; j < this.nodes[i].length; j++) {
+                    let node = this.nodes[i][j];
+                    if(node) {
+                        str += " " + 1 + ",";
+                    } else {
+                        str += "" + (-1) + ",";
+                    }
+                }
+                str += "\n";
+            }
+            console.log(str, "======================nodes");
+        } else {
+            let str:string = "";
+            for(let i = 0; i < this.nodes.length; i++) {
+                for(let j = 0; j < this.nodes[i].length; j++) {
+                    let node = this.nodes[i][j];
+                    if(node) {
+                        str += " " + 1 + ",";
+                    } else {
+                        str += "" + (-1) + ",";
+                    }
+                }
+                str += "\n";
+            }
+            console.log(str, "======================nodes");
+        }
     }
 
 
@@ -349,12 +630,13 @@ export class GameMain3D extends Component {
                 console.log("========hello world");
             }
             this.firingNode = this.recreateAFireNode();
+            this.firingNode.name = "FireBoy";
             this.node.addChild(this.firingNode);
-            this.firingNode.setPosition(this.FIREPOINT);
+            this.firingNode.setPosition(this.convertFirePoint);
 
-            let targetPosition:Vec3 = this.gameData.getPositionByColumnAndRow(temp.x, temp.y);
+            let targetPosition:Vec3 = this.gameData.getPositionByColumnAndRow(temp.x, temp.y,GameMain3D.totalDeleteRow);
 
-            let distance:number = Vec3.distance(targetPosition, this.FIREPOINT);
+            let distance:number = Vec3.distance(targetPosition, this.convertFirePoint);
             let time = distance / SPEED;
             tween(this.firingNode).to(time, {position:targetPosition}).call(()=>{
                 this.gameData.insertAFiringNode(temp.x, temp.y);
@@ -364,15 +646,19 @@ export class GameMain3D extends Component {
             }).start();
 
         } else {
-            console.log("=========没有被击中============");
             this.firingNode = this.recreateAFireNode();
+            this.firingNode.name = "FireBoy";
             this.node.addChild(this.firingNode);
-            this.firingNode.setPosition(this.FIREPOINT);
-            let targetPosition:Vec3 = v3(this.FIREPOINT.x + this.myGap.x * 27, this.FIREPOINT.y, this.FIREPOINT.z + this.myGap.z * 27);
+            this.firingNode.setPosition(this.convertFirePoint);
+            let targetPosition:Vec3 = v3(this.convertFirePoint.x + this.myGap.x * 40, this.convertFirePoint.y, this.convertFirePoint.z + this.myGap.z * 40);
             tween(this.firingNode).to(0.2, {position:targetPosition}).call(()=>{
                 this.firingNode.removeFromParent();
                 this.firingNode.destroy();
                 this.firingNode = null;
+
+                this.canShoot = true;
+
+                this.printLog(false);
             }).start();
         }
     }
@@ -409,7 +695,7 @@ export class GameMain3D extends Component {
             let dot = this.usedDotNodes[i];
             dot.getComponent(OpacityLind3D).MyColor = this.gameData.getFireColor();
             let plus = v3(gap.x * i * PERDOTLENGTH, 0, gap.z * i * PERDOTLENGTH);
-            let position = v3(this.FIREPOINT.x + plus.x, this.FIREPOINT.y + plus.y, this.FIREPOINT.z + plus.z);
+            let position = v3(this.convertFirePoint.x + plus.x, this.convertFirePoint.y + plus.y, this.convertFirePoint.z + plus.z);
             dot.setPosition(position);
         }
     }
@@ -430,6 +716,18 @@ export class GameMain3D extends Component {
 
     private createAFireNode() {
         let value = this.gameData.createAFireNode();
+        let node = this.createNodeByValue(value);
+        return node;
+    }
+
+    private createABackNode() {
+        let value = this.gameData.createABackNode();
+        let node = this.createNodeByValue(value);
+        return node;
+    }
+
+    private doBackNode() {
+        let value = this.gameData.getBackValue();
         let node = this.createNodeByValue(value);
         return node;
     }
@@ -465,7 +763,7 @@ export class GameMain3D extends Component {
         let dog = Math.sqrt(mostShortDistance * mostShortDistance - mostRealDistance * mostRealDistance);
         dog = dog - ggap;
 
-        let hitPoint = v2(this.FIREPOINT.x + gap.x * dog, this.FIREPOINT.z + gap.z * dog);
+        let hitPoint = v2(this.convertFirePoint.x + gap.x * dog, this.convertFirePoint.z + gap.z * dog);
         let position = this.nodes[targetI][targetJ].getPosition();
         let final = v2(hitPoint.x - position.x, hitPoint.y - position.z);
         final = final.normalize();
@@ -475,27 +773,21 @@ export class GameMain3D extends Component {
         }
         if(angle >= 300 || angle <= 40) {
             direction = SEARCHDIRECTION.RIGHT;
-            console.log("============碰到了右边");
         }
         else if(angle >= 20 && angle <= 90) {
             direction = SEARCHDIRECTION.DOWNRIGHT;
-            console.log("==============碰到了右下");
         }
         else if(angle >= 90 && angle <= 160) {
             direction = SEARCHDIRECTION.DOWNLEFT
-            console.log("===============碰到了左下");
         }
         else if(angle >= 160 && angle <= 180) {
             direction = SEARCHDIRECTION.LEFT;
-            console.log("==================左边");
         }
         else if(angle >= 180 && angle <= 270) {
             direction = SEARCHDIRECTION.UPLEFT;
-            console.log("=================左上");
         }
         else if(angle >= 270 && angle <= 300) {
             direction = SEARCHDIRECTION.UPRIGHT;
-            console.log("=================右上");
         }
         return direction;
     }
@@ -568,6 +860,68 @@ export class GameMain3D extends Component {
             }
         }
         return direction;
+    }
+
+    /** 用来检测，数据，还有前端，是否是一致的 */
+    checkIsEqual() {
+
+        let isEqual:boolean = true;
+        let nodes = this.nodes;
+        let datas = this.gameData.getInitData();
+        for(let i = 0; i < nodes.length; i++) {
+            for(let j = 0; j < nodes[i].length; j++) {
+                let node = nodes[i][j];
+                if(node){
+                    let val = datas[i][j];
+                    if(val == -1) {
+                        isEqual = false;
+                    }
+                } else {
+                    let val = datas[i][j];
+                    if(val >= 0) {
+                        isEqual = false;
+                    }
+                }
+            }
+        }
+
+        for(let i = 0; i < datas.length; i++) {
+            for(let j = 0; j < datas[i].length; j++) {
+                let val = datas[i][j];
+                if(val >= 0) {
+                    let node = nodes[i][j];
+                    if(!node) {
+                        isEqual = false;
+                    }
+                } else {
+                    let node = nodes[i][j];
+                    if(node) {
+                        isEqual = false;
+                    }
+                }
+            }
+        }
+        if(!isEqual) {
+            console.log("不一样")
+        }
+        else {
+            console.log("是一样");
+        }
+        if(isEqual) {
+            let isAllOver = true;
+            for(let i = 0; i < datas.length; i++) {
+                for(let j = 0; j < datas[i].length; j++) {
+                    let val = datas[i][j];
+                    if(val >= 0) {
+                        isAllOver = false;
+                    }
+                }
+            }
+
+            if(isAllOver) {
+                TailPage.Instance.onShowPage();
+            }
+        }
     }
 }
 

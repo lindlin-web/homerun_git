@@ -34,35 +34,33 @@ export const PERZ:number = 1.6;
 /** 后续用来支持的那些弄得 */
 var SUPPORT:number[][] =  [
 
-    [-1,-1,-1,-1,-1,],
-    [-1,-1,-1,-1,-1,],
-    [-1,-1,-1,-1,-1,],
-    [-1,-1,-1,-1,-1,],
-    [-1,-1,-1,-1,-1,],
-    [-1,-1,-1,-1,-1,],
-    [-1,-1,-1,-1,-1,],
-    [-1,-1,-1,-1,-1,],
-    [ 1,-1, 2, 3, 3,],
-    [ 2,-1, 2, 3, 2,],
-    [ 3,-1, 2,-1, 3,],
-    [ 1,-1, 1,-1,-1,],
-    [ 2, 3, 1, 3, 1,],
-    [ 3, 3, 3, 3, 1,],
-    [ 1,-1, 2,-1, 1,],
-    [ 3,-1, 2,-1,-1,],
-    [ 1,-1, 1, 3, 3,],
-    [ 1,-1, 1, 3, 1,],
-    [ 1,-1, 1,-1, 3,],
-    [-1,-1,-1,-1,-1,],
-    [-1,-1,-1,-1,-1,],
-    [-1,-1,-1,-1,-1,],
-    [-1,-1,-1,-1,-1,],
-    [-1,-1,-1,-1,-1,],
-    [-1,-1,-1,-1,-1,],
-    [-1,-1,-1,-1,-1,],
-    [-1,-1,-1,-1,-1,],
-
-
+    [-1,-1,-1,-1,-1,-1,-1,],
+    [-1,-1,-1,-1,-1,-1,-1,],
+    [-1,-1,-1,-1,-1,-1,-1,],
+    [-1,-1,-1,-1,-1,-1,-1,],
+    [-1,-1,-1,-1,-1,-1,-1,],
+    [-1,-1,-1,-1,-1,-1,-1,],
+    [-1,-1,-1,-1,-1,-1,-1,],
+    [-1,-1,-1,-1,-1,-1,-1,],
+    [-1, 2, 3, 3, 2, 3, 3,],
+    [-1, 2, 3, 2, 2, 3, 2,],
+    [ 1, 2,-1, 3, 2,-1, 3,],
+    [ 1, 1,-1,-1, 1,-1,-1,],
+    [ 1, 1, 3, 1, 1, 3, 1,],
+    [ 1, 3, 3, 1, 3, 3, 1,],
+    [ 1, 2,-1, 1, 2,-1, 1,],
+    [ 1, 2,-1,-1, 2,-1,-1,],
+    [ 1, 1, 3, 3, 1, 3, 3,],
+    [-1, 1, 3, 1, 1, 3, 1,],
+    [-1, 1,-1, 3, 1,-1, 3,],
+    [-1,-1,-1,-1,-1,-1,-1,],
+    [-1,-1,-1,-1,-1,-1,-1,],
+    [-1,-1,-1,-1,-1,-1,-1,],
+    [-1,-1,-1,-1,-1,-1,-1,],
+    [-1,-1,-1,-1,-1,-1,-1,],
+    [-1,-1,-1,-1,-1,-1,-1,],
+    [-1,-1,-1,-1,-1,-1,-1,],
+    [-1,-1,-1,-1,-1,-1,-1,],
 
 
 ]
@@ -78,17 +76,17 @@ var INITDATA:number[][] = [
                                                 [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,],
                                                 [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,],
                                                 [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,],
-                                                [-1,-1, 2, 2, 2, 2, 2,-1, 2, 3, 3,],
-                                                [-1,-1, 2, 1, 1, 1, 2,-1, 2, 3, 2,],
-                                                [-1,-1, 2, 1, 1, 1, 2,-1, 2,-1, 3,],
-                                                [-1,-1, 2, 1, 1, 1, 2,-1, 1,-1,-1,],
-                                                [-1,-1, 2, 1, 1, 1, 2, 3, 1, 3, 1,],
-/**------> 这里看进去**/                         [-1,-1, 2, 1, 1, 1, 2, 3, 3, 3, 1,],
-                                                [-1,-1, 2, 1, 1, 1, 2,-1, 2,-1, 1,],
-                                                [-1,-1, 2, 1, 1, 1, 2,-1, 2,-1,-1,],
-                                                [-1,-1, 2, 1, 1, 1, 2,-1, 1, 3, 3,],
-                                                [-1,-1, 2, 2, 1, 2, 2,-1, 1, 3, 1,],
-                                                [-1,-1, 2,-1, 2,-1, 2,-1, 1,-1, 3,],
+                                                [-1,-1,-1, 1,-1, 2, 3, 3, 2, 3, 3,],
+                                                [-1,-1,-1, 2,-1, 2, 3, 2, 2, 3, 2,],
+                                                [-1,-1, 2, 3,-1, 2,-1, 3, 2,-1, 3,],
+                                                [-1,-1, 2, 1,-1, 1,-1,-1, 1,-1,-1,],
+                                                [-1,-1, 2, 2, 3, 1, 3, 1, 1, 3, 1,],
+/**------> 这里看进去**/                         [-1,-1, 2, 3, 3, 3, 3, 1, 3, 3, 1,],
+                                                [-1,-1,-1, 1,-1, 2,-1, 1, 2,-1, 1,],
+                                                [-1,-1,-1, 3,-1, 2,-1,-1, 2,-1,-1,],
+                                                [-1,-1,-1, 1,-1, 1, 3, 3, 1, 3, 3,],
+                                                [-1,-1,-1, 1,-1, 1, 3, 1, 1, 3, 1,],
+                                                [-1,-1,-1, 1,-1, 1,-1, 3, 1,-1, 3,],
                                                 [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,],
                                                 [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,],
                                                 [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,],
@@ -99,6 +97,7 @@ var INITDATA:number[][] = [
                                                 [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,],
     
 ];
+
 export class GameData implements IGameData {
     private ballNodes:BallNode[] = [];      // 这个是所有的Ball的数据, 包括row, column, color.
     
@@ -119,19 +118,25 @@ export class GameData implements IGameData {
 
     private _grid:Grid;
 
-    private lastSupportRowNum:number = -1;      // 上一次补给了多少行......
     constructor() {
-        //this.devideGroup();
+        this.devideGroup();
     }
 
     createAFireNode() {
         let color:number = Math.ceil(Math.random() * 3);
+        color = 2;
         this.fireNodeColor = color;
         return color;
     }
 
+    /** 发射的颜色. */
     getFireValue() {
         return this.fireNodeColor;
+    }
+
+    /** 备用的颜色 */
+    getBackValue() {
+        return this.backNodeColor;
     }
 
     getFireColor():Color {
@@ -205,7 +210,15 @@ export class GameData implements IGameData {
     }
 
     public getValueByColumnAndRow(column:number, row:number):number {
+        let rows = INITDATA[column];
+        if(!rows) {
+            console.log("hehhh");
+            return -1;
+        }
         let val = INITDATA[column][row];
+        if(val == undefined) {
+            return -1;
+        }
         return val;
     }
 
@@ -222,12 +235,20 @@ export class GameData implements IGameData {
                 }
             }
         }
+
+        
+        console.log("=====================before drop==================");
+        this.getInitData();
         // 删除掉这些node...
         for(let i = 0; i < dropBalls.length; i++) {
             let v2:Vec2 = dropBalls[i];
-            INITDATA[v2.x][v2.y] = -1;
-        }
+            let x = Math.floor(v2.x);
+            let y = Math.floor(v2.y);
 
+            INITDATA[x][y] = -1;
+        }
+        console.log("====================after drop========================");
+        this.getInitData();
         NotifyMgrCls.getInstance().send(AppNotify.DROPBUBBLEDONE, dropBalls);
 
         // 然后这个时候，是可以去检查一下，删除掉了有多少的行. 然后在 SUPPORT队列里面补充几个行进去...
@@ -237,6 +258,9 @@ export class GameData implements IGameData {
     public needDeleteGroup(groupVal:number):void {
         this.preDeleteGroup = groupVal;                 // 之前被删除的那个组的信息是什么。 这样为了做掉落的时候，不要多计算一次...
         let deleteGroup:Vec2[] = [];
+
+        console.log("========before delete group ========================")
+        this.getInitData();
         for(let i = 0; i < this.ballNodes.length; i++) {
             let ball:BallNode = this.ballNodes[i];
             if(ball.getGroup() == groupVal) {
@@ -245,18 +269,26 @@ export class GameData implements IGameData {
             }
         }
         // 删除掉这些node...
+
+        
         for(let i = 0; i < deleteGroup.length; i++) {
             let v2:Vec2 = deleteGroup[i];
+
             INITDATA[v2.x][v2.y] = -1;
         }
 
+        console.log("============after delete group ====================");
+        this.getInitData();
+
+        console.log("======================delteGroup value ===", deleteGroup);
         NotifyMgrCls.getInstance().send(AppNotify.DELETEBUBBLEDONE, deleteGroup);
 
     }
 
 
-    public getPositionByColumnAndRow(column:number, row:number):Vec3 {
+    public getPositionByColumnAndRow(column:number, row:number, totalDeleteRow:number):Vec3 {
         let gap = 1;
+        row = row + totalDeleteRow;
         if(row % 2 == 0) {
             gap = 0;
         } 
@@ -264,8 +296,12 @@ export class GameData implements IGameData {
         return pos;
     }
 
+    public getSupport():number[][] {
+        return SUPPORT;
+    }
+
     /***  */
-    public checkTheDropThing():void {
+    public checkTheDropThing():boolean {
         this._grid = new Grid(INITDATA.length, INITDATA[0].length,INITDATA);
 
         let groups = this.groupMgr.getGroupValues();
@@ -301,25 +337,74 @@ export class GameData implements IGameData {
                 }
             }
         }    
-
+        let retVal:boolean = true;
         if(deleteGroups && deleteGroups.length) {
+            retVal = false;
             this.needDropGroup(deleteGroups);
         }
+        return retVal;
     }
 
     /** 看看是否有后续可以的补给 */
-    public checkToSupport() {
+    public checkToSupport():Vec2 {
         let deleteCount:number = this.checkHowManyRowHaveDeleted();
         deleteCount -= 2;       // 留下两行数据下来...
+        let totalSupportRow:number = 0;
+        if(deleteCount > 0) {
+            
+            console.log("============before support============");
+            this.getInitData();
+            // 1*. 把Support 数据 填充进INITDATA数据中...
+            for(let i = 0; i < deleteCount && i < SUPPORT[0].length; i++) {
 
+                for(let j = 0; j < SUPPORT.length; j++) {
+                    let supportVal = SUPPORT[j][i];
+                    INITDATA[j].push(supportVal);
+                }
+                totalSupportRow++;
+            }
 
+            console.log("===============after support ============");
+            this.getInitData();
+
+            console.log("====================before shift==============");
+            this.getInitData();
+
+            // 2*. 把INITDATA中的数据，前面的行删除.
+            // 3*. 把SUPPORT中的数据，前面的行删除.
+            for(let i = 0; i < totalSupportRow; i++) {
+                for(let j = 0; j < INITDATA.length;j++) {
+                    INITDATA[j].shift();
+                    //SUPPORT[j].shift();           // 先别删除供给，等熏染完成之后在做这一步..
+                }
+            }
+            console.log("===================after shift=================");
+            this.getInitData();
+            return v2(deleteCount, totalSupportRow);        // 返回删除了多少行， 添加了多少行的数据...
+        }
+        return v2(0, 0);        // 返回删除了多少行， 添加了多少行的数据...
+    }
+
+    public deleteTheSupportByRow(rowNum:number):void {
+        for(let i = 0; i < rowNum; i++) {
+            for(let j = 0; j < SUPPORT.length;j++) {
+                SUPPORT[j].shift();
+            }
+        }
     }
 
    
     public insertAFiringNode(column:number, row:number):void  {
+
+        console.log("==========================insert begin===========================");
+        this.getInitData();
+        console.log("====inert column=" + column + ", row=" +row + ", value=", this.fireNodeColor);
         INITDATA[column][row] = this.fireNodeColor;
+        this.getInitData();
+        console.log("==========================insert end===========================");
+
         NotifyMgrCls.getInstance().send(AppNotify.INSERTBUBBLEDONE, column, row);
-    } 
+    }
 
     public getGroupVals():number[] {
         return this.groupMgr.getGroupValues();
@@ -327,8 +412,26 @@ export class GameData implements IGameData {
 
     /** 获得这个初始化的数据 */
     public getInitData() {
-        console.log("hel")
+        let str = "";
+        for(let i = 0; i < INITDATA.length; i++) {
+            for(let j = 0; j < INITDATA[0].length; j++) {
+                if(INITDATA[i][j] > 0) {
+                    str += " " + INITDATA[i][j] + ",";
+                }
+                else {
+                    str += "" + INITDATA[i][j] + ",";
+                }
+                
+            }
+            str += "\n";
+        }
+        console.log(str);
         return INITDATA;
+    }
+
+    public changeTheCircle() {
+        this.fireNodeColor = this.backNodeColor;            // 把备用的变成正式的节点...
+        this.createABackNode();                             
     }
 
 

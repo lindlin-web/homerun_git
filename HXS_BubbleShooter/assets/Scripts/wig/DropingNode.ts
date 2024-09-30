@@ -19,7 +19,7 @@ export class DropingNode extends Component {
 
     doDroping() {
         let speedX = Math.random() * 50 - 25;
-        let speedZ = Math.random() * 15 - 7;
+        let speedZ = Math.random() * 10 - 10;
         this.speed = v2(speedX, speedZ);
         this.isDoDroping = true;
         

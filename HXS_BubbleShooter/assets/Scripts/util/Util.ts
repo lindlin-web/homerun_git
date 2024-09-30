@@ -1,13 +1,15 @@
 import { v2, Vec2 } from "cc";
 import { BallNode } from "../data/BallNode";
 import { SEARCHDIRECTION } from "../data/GroupMgr";
+import { GameMain3D } from "../GameMain3D";
 
 export class Util {
 
     public static getColumnAndRowByDirection(column:number, row:number,direction:SEARCHDIRECTION) {
         let targetRow = -1;
         let targetColumn = -1;
-        if(row % 2 == 0) {                  // 如果是双行的话...
+        let tempRow = row + GameMain3D.totalDeleteRow;
+        if(tempRow % 2 == 0) {                  // 如果是双行的话...
             if(direction == SEARCHDIRECTION.UPRIGHT) {
                 targetRow = row + 1;
                 targetColumn = column;

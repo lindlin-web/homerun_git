@@ -27,7 +27,6 @@ export class GroupMgr {
                 // 如果还没有组队
                 this.processBallNode(ballNode,-1);          //  就是靠这个节点寻找自己同样的颜色的节点..
             }
-            console.log(this.dealingNodes, "======出来的处理节点");
         }
         
     }
@@ -42,7 +41,6 @@ export class GroupMgr {
             ballNode.setGroup(groupMsg);        // 递归的方法来解决这个问题.
         }
 
-        console.log(ballNode, "======被添加");
         this.dealingNodes.push(ballNode);
         for(let i = 0; i <= SEARCHDIRECTION.RIGHT; i++) {
             let row = ballNode.getRow();        // 双行和单行的区别要体现出来..

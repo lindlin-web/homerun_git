@@ -15,5 +15,9 @@ export class MyNode {
         if(this.value < 0) {
             this.walkable = false;
         }
+        /** 为寻路添加一个特殊的判断 */
+        if(this.value == -2) {
+            this.walkable = true;
+        }
     }
 }

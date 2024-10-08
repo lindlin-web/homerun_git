@@ -1,4 +1,4 @@
-import { _decorator, Component, instantiate, Touch, Node, Prefab, systemEvent, SystemEventType, v3, Vec3, Camera, PhysicsSystem, Mat4, NodePool, Color, color, v2, Vec2, Vec4, v4, tween,screen, setPropertyEnumType, utils } from 'cc';
+import { _decorator, Component, instantiate, Touch, Node, Prefab, systemEvent, SystemEventType, v3, Vec3, Camera, PhysicsSystem, Mat4, NodePool, Color, color, v2, Vec2, Vec4, v4, tween,screen, setPropertyEnumType, utils, DebugMode, Widget } from 'cc';
 import { IGameData } from './data/IGameData';
 import { BALLCOLOR, GameData, INITX, INITZ, PERX, PERZ } from './data/GameData';
 import { Grid } from './AStar/Grid';
@@ -10,6 +10,8 @@ import { GameMain } from './GameMain';
 import { DropingNode } from './wig/DropingNode';
 import { OperateNode } from './wig/OperateNode';
 import { TailPage } from './TailPage';
+import { AudioMgr } from './AudioMgr';
+import Debug from './Debug';
 const { ccclass, property } = _decorator;
 
 
@@ -82,9 +84,20 @@ export class GameMain3D extends Component {
 
     private canShoot:boolean = true;               // 可以射击...
 
+    @property(Node)
+    theHand:Node;
+
+    private isOnGuide:boolean = true;           // 是否是在引导的阶段...
+
+    private initPosition:Vec3 = v3(3.633, 1.367,15.182);
+
+    @property(Node)
+    button:Node;
+
     protected onLoad(): void {
         
-        
+        Debug.initial(DebugMode.VERBOSE);
+        Debug.log("hello world");
         NotifyMgrCls.getInstance().observe(AppNotify.INSERTBUBBLEDONE, this.onInsertBubbleDone.bind(this));
         NotifyMgrCls.getInstance().observe(AppNotify.DELETEBUBBLEDONE, this.onDeleteBubbleDone.bind(this));
         NotifyMgrCls.getInstance().observe(AppNotify.DROPBUBBLEDONE, this.onDropBubbleDone.bind(this));
@@ -119,19 +132,29 @@ export class GameMain3D extends Component {
         screen.on("window-resize", this.onWindowResize.bind(this), this);
         let size = screen.windowSize;
         this.onWindowResize(size.width, size.height);
+
+        
+
     }
 
-    onDropBubbleDone(vecs:Vec2[]) {
-        console.log(vecs, "=============drops============");
 
-        console.log("=============before front drop");
+// Vec2 {x: 16, y: 2}
+// Vec2 {x: 17, y: 2}
+// Vec2 {x: 18, y: 2}
+// Vec2 {x: 16, y: 3}
+// Vec2 {x: 16, y: 4}
+// Vec2 {x: 17, y: 3}
+// Vec2 {x: 18, y: 4}
+
+
+    onDropBubbleDone(vecs:Vec2[]) {
         this.printLog(true);
         for(let i = 0; i < vecs.length; i++) {
             let vec = vecs[i];
             let node = this.nodes[vec.x][vec.y];
             this.nodes[vec.x][vec.y] = null;
+
             if(!node) {
-                console.log("==========肯定是有错误的");
                 return;
             }
             node.getComponent(DropingNode).doDroping();
@@ -140,7 +163,6 @@ export class GameMain3D extends Component {
                 node.removeFromParent();
                 node.destroy();
                 node = null;
-                this.nodes[vec.x][vec.y] = null;
             }).start();
             for(let j = 0; j < node.children.length; j++) {
                 let dropNode = node.children[j].getComponent(DropingNode);
@@ -149,7 +171,6 @@ export class GameMain3D extends Component {
                 }
             }
         }
-        console.log("=================after front drop");
         this.printLog(true);
         this.scheduleOnce(()=>{
             // 基本上，删除的行， 和 补给的行是一样的..
@@ -211,8 +232,6 @@ export class GameMain3D extends Component {
             this.checkIsEqual();
             this.canShoot = true;
             this.printLog(false);
-
-
         }
     }
 
@@ -224,7 +243,6 @@ export class GameMain3D extends Component {
             let node = this.theFakeNodes[i];
             node.removeFromParent();
         }
-
         this.theFakeNodes = [];
         for(let i = 0; i < SUPPORTDATA.length; i++) {
             let val = SUPPORTDATA[i][0];
@@ -236,7 +254,6 @@ export class GameMain3D extends Component {
                 node.setPosition(pos);
             }
         }
-
         let original = this.node.getPosition();
         let pos = v3(original.x,original.y,original.z + PERZ * rowNum);
 
@@ -251,9 +268,6 @@ export class GameMain3D extends Component {
             let tempPos:Vec3 = v3(0,0,0);
             this.operator.getChildByName("FireBoy").getWorldPosition(tempPos);
             Vec3.transformMat4(this.convertFirePoint, tempPos, tempMat4);
-
-
-
             this.checkIsEqual();
             this.canShoot = true;
             this.printLog(false);
@@ -261,8 +275,6 @@ export class GameMain3D extends Component {
     }
 
     onDeleteBubbleDone(vecs:Vec2[]) {
-
-        console.log("==========before front delete=========");
         this.printLog(true);
         for(let i = 0; i < vecs.length; i++) {
             let vec = vecs[i];
@@ -295,7 +307,6 @@ export class GameMain3D extends Component {
 
     /*** 数据通知，已经在列 行中插入了一个bubble了 */
     onInsertBubbleDone(column:number, row:number):void {
-
         if(row < 0) {
             this.showFinalPage();
             return;
@@ -303,10 +314,8 @@ export class GameMain3D extends Component {
         let val = this.gameData.getValueByColumnAndRow(column,row);
         let node = this.createNodeByValue(val);
         this.node.addChild(node);
-        console.log('==============begin front insert===============');
         this.printLog(true);
         this.nodes[column][row] = node;
-        console.log('==================after insert=================');
         this.printLog(true);
         let pos:Vec3 = this.gameData.getPositionByColumnAndRow(column, row,GameMain3D.totalDeleteRow);
         node.setPosition(pos);
@@ -325,12 +334,9 @@ export class GameMain3D extends Component {
 
     changeCircle() {
         this.gameData.changeTheCircle();                // 备用的变成正式的， 然后 产生一个备用的.
-
-
         let temp = this.fireNode;
         this.fireNode = this.backupNode;
         this.backupNode = temp;
-
         this.backupNode.removeFromParent();
         this.backupNode.destroy();
         this.backupNode = null;
@@ -401,29 +407,16 @@ export class GameMain3D extends Component {
             node.setPosition(pos);
             this.theFakeNodes.push(node);
         }
-
-
     }
-
-
-
 
     /** 获得那个最佳的碰撞的节点, 1 距离, 2 左边还是右边, 3 column  4. row */
     getTheMostHitOne(gap:Vec3):Vec4 {
         let kx = gap.x;
         let kz = gap.z;
-
-        //  = (kz / kx) *
-        //z - this.FIREPOINT.z = (kz / kx) * (x - this.FIREPOINT.x);
-
-        // (z - this.FIREPOINT.Z) * kx = kz * (x - this.FIREPOINT.x);
-        // kz * x - kx * z - kz * this.FIREPOINT.x + this.FIREPOINT.Z * kx = 0;
-
         let direction:number = -1;
         let A = -kz;
         let B = kx;
         let C = kz * (this.convertFirePoint.x) - this.convertFirePoint.z * kx;
-
         let square = Math.sqrt(A*A + B * B);
         let mostShortDistance = 120;
         let mostRealDistance = 0;       // 最近的那个的射线与圆的距离...
@@ -446,13 +439,12 @@ export class GameMain3D extends Component {
 
                 let distance = Math.abs(A * x0 + B * z0 + C );
                 distance = distance / square;
-                if(distance < this.radius) {
+                if(distance < (this.radius*1.50)) {
                     // 如果小于半径，说明，已经是发生了碰撞了... 这个时候还需要再计算一下最近的那个...
                     let gapX = Math.abs(this.convertFirePoint.x - x0);
                     let gapZ = Math.abs(this.convertFirePoint.z - z0);
                     let realDistance = Math.sqrt(gapX * gapX + gapZ * gapZ);
                     if(realDistance < mostShortDistance) {
-
                         direction = this.whichAngleYouHit(gap,i,j,distance,realDistance);
                         if(direction < 0) {
                         }
@@ -490,9 +482,8 @@ export class GameMain3D extends Component {
         return v4(mostShortDistance,direction,targetI, targetJ);
     }
 
-    doTheTouchThing(touch:Touch):Vec4 {
-        let touchPos = touch.getLocation();
-        let ray = this.mainCamera.screenPointToRay(touchPos.x, touchPos.y);
+    doTheTouchThing2(posx:number, posy:number):Vec4 {
+        let ray = this.mainCamera.screenPointToRay(posx, posy);
         let result = v4(0, 0, 0, 0);
         if(PhysicsSystem.instance.raycastClosest(ray)) {
             const res = PhysicsSystem.instance.raycastClosestResult;
@@ -507,10 +498,22 @@ export class GameMain3D extends Component {
             // out 就是点击的位置，已经转换为我的本地坐标了。。。。。
 
             let sub = this.myGap = out.subtract(this.convertFirePoint).normalize();
-            result =this.getTheMostHitOne(sub);
-            let distance = result.x;
-            this.createDotLine(sub, distance);
+            result = this.doTheTouchThing3(sub);
         }
+        return result;
+    }
+
+    doTheTouchThing3(sub:Vec3) {
+        let result = v4(0, 0, 0, 0);
+        result =this.getTheMostHitOne(sub);
+        let distance = result.x;
+        this.createDotLine(sub, distance);
+        return result;
+    }
+
+    doTheTouchThing(touch:Touch):Vec4 {
+        let touchPos = touch.getLocation();
+        let result = this.doTheTouchThing2(touchPos.x, touchPos.y);
         return result;
     }
 
@@ -520,11 +523,17 @@ export class GameMain3D extends Component {
             this.node.setPosition(v3(0, 0, 0));
             this.operator.setPosition(v3(0, 0,0));
             SPEED = 60;
+            this.button.scale = v3(0.5,0.5,0.5);
+            this.button.getComponent(Widget).bottom = 30;
+            this.button.getComponent(Widget).horizontalCenter= 160;
         } else {
             this.mainCamera.fov = 80;
             this.node.setPosition(v3(0, 0, -13.7));
             this.operator.setPosition(v3(0,0,13.7));
             SPEED = 160;
+            this.button.scale = v3(0.25,0.25,0.25);
+            this.button.getComponent(Widget).bottom = 10;
+            this.button.getComponent(Widget).horizontalCenter= 80;
         }
         let original:Vec3 = v3(0, 0, 0);
         this.node.getPosition(original);
@@ -543,11 +552,8 @@ export class GameMain3D extends Component {
     
     
     start() {
-
-        
-
-
         systemEvent.on(SystemEventType.TOUCH_START, (touch:Touch) => {
+            AudioMgr.Instance.PlayBgm();
             if(!this.canShoot) {
                 return;
             }
@@ -560,7 +566,10 @@ export class GameMain3D extends Component {
                 return;
             }
             if(this.isClickOn) {
-                this.doTheTouchThing(touch);
+                let result = this.doTheTouchThing(touch);
+                if(result.z >= 0) {
+                    console.log(result, "======result是什么");
+                }
             }
         });
 
@@ -576,13 +585,52 @@ export class GameMain3D extends Component {
 
             let result = this.doTheTouchThing(touch);
 
-            
+            AudioMgr.Instance.pos.play();
             /** 释放了之后，处理........ */
             this.handleRelease(result);
 
             // 回收虚线...
             this.recycleDot();
         });
+
+        this.doTheGuideThing();
+        
+    }
+
+    doTheGuideThing() {
+        this.canShoot = false;
+        tween(this.theHand).to(0.5,{position:v3(0.253,1.367,13.182)}).to(0.7, {position:v3(-1.233,1.367,13.182)}).to(0.6, {position:v3(0.653,1.367,13.182)}).delay(0.5).call(()=>{
+            this.canShoot = true;
+            this.isOnGuide = false;
+            this.theHand.active = false;
+
+            let matrix = this.node.getWorldMatrix();
+            let tempMat4 = new Mat4();
+            Mat4.invert(tempMat4, matrix);
+            let tempPos:Vec3 = v3(0,0,0);
+            this.operator.getChildByName("FireBoy").getWorldPosition(tempPos);
+            Vec3.transformMat4(this.convertFirePoint, tempPos, tempMat4);
+
+
+            let tempPos2:Vec3 = v3(0, 0, 0);
+            this.operator.getChildByName("theHand").getWorldPosition(tempPos2);
+            Vec3.transformMat4(tempPos2, tempPos2,tempMat4);
+
+            
+
+            let sub = this.myGap = tempPos2.subtract(this.convertFirePoint).normalize();
+            sub = sub.normalize();
+            sub.y = 0;
+
+            console.log(sub, "========sub是等于多少");
+            let result = this.doTheTouchThing3(sub);
+            /** 释放了之后，处理........ */
+            this.handleRelease(result);
+            // 回收虚线...
+            this.recycleDot();
+
+        }).start();
+
     }
 
     printLog(bo:boolean) {
@@ -599,7 +647,6 @@ export class GameMain3D extends Component {
                 }
                 str += "\n";
             }
-            console.log(str, "======================nodes");
         } else {
             let str:string = "";
             for(let i = 0; i < this.nodes.length; i++) {
@@ -613,7 +660,6 @@ export class GameMain3D extends Component {
                 }
                 str += "\n";
             }
-            console.log(str, "======================nodes");
         }
     }
 
@@ -644,7 +690,6 @@ export class GameMain3D extends Component {
                 this.firingNode.destroy();
                 this.firingNode = null;
             }).start();
-
         } else {
             this.firingNode = this.recreateAFireNode();
             this.firingNode.name = "FireBoy";
@@ -655,9 +700,9 @@ export class GameMain3D extends Component {
                 this.firingNode.removeFromParent();
                 this.firingNode.destroy();
                 this.firingNode = null;
-
                 this.canShoot = true;
-
+                /** 就是把备用的，变成正式的节点 */
+                this.changeCircle();
                 this.printLog(false);
             }).start();
         }
@@ -701,7 +746,27 @@ export class GameMain3D extends Component {
     }
 
     update(deltaTime: number) {
-        
+        if(this.isOnGuide) {
+            let matrix = this.node.getWorldMatrix();
+            let tempMat4 = new Mat4();
+            Mat4.invert(tempMat4, matrix);
+            let tempPos:Vec3 = v3(0,0,0);
+            this.operator.getChildByName("FireBoy").getWorldPosition(tempPos);
+            Vec3.transformMat4(this.convertFirePoint, tempPos, tempMat4);
+
+
+            let tempPos2:Vec3 = v3(0, 0, 0);
+            this.operator.getChildByName("theHand").getWorldPosition(tempPos2);
+            Vec3.transformMat4(tempPos2, tempPos2,tempMat4);
+
+            
+
+            let sub = this.myGap = tempPos2.subtract(this.convertFirePoint).normalize();
+            sub = sub.normalize();
+            sub.y = 0;
+
+            this.doTheTouchThing3(sub);
+        }
     }
     private getDotNode():Node {
         const size = this.dotNodePool.size();
@@ -745,6 +810,9 @@ export class GameMain3D extends Component {
         if(val == -1) {
             pre = this.prefabs[3];
         }
+        else if(val == -2) {
+            pre = this.prefabs[3];
+        }
         else if(val == 1) {
             pre = this.prefabs[0];
         } else if(val == 2) {
@@ -758,38 +826,72 @@ export class GameMain3D extends Component {
 
 
     private whichAngleYouHit(gap:Vec3,targetI:number, targetJ:number, mostRealDistance:number, mostShortDistance:number) {
-        let direction = -1;
-        let ggap = Math.sqrt(this.radius * this.radius - mostRealDistance * mostRealDistance);
-        let dog = Math.sqrt(mostShortDistance * mostShortDistance - mostRealDistance * mostRealDistance);
-        dog = dog - ggap;
-
-        let hitPoint = v2(this.convertFirePoint.x + gap.x * dog, this.convertFirePoint.z + gap.z * dog);
-        let position = this.nodes[targetI][targetJ].getPosition();
-        let final = v2(hitPoint.x - position.x, hitPoint.y - position.z);
-        final = final.normalize();
-        let angle = Math.atan2(final.y, final.x) * 180 / Math.PI;
-        if(angle <= 0) {
-            angle += 360;
+        if(mostRealDistance <= this.radius) {
+            let direction = -1;
+            let ggap = Math.sqrt(this.radius * this.radius - mostRealDistance * mostRealDistance);
+            let dog = Math.sqrt(mostShortDistance * mostShortDistance - mostRealDistance * mostRealDistance);
+            dog = dog - ggap;
+    
+            let hitPoint = v2(this.convertFirePoint.x + gap.x * dog, this.convertFirePoint.z + gap.z * dog);
+            let position = this.nodes[targetI][targetJ].getPosition();
+            let final = v2(hitPoint.x - position.x, hitPoint.y - position.z);
+            final = final.normalize();
+            let angle = Math.atan2(final.y, final.x) * 180 / Math.PI;
+            if(angle <= 0) {
+                angle += 360;
+            }
+            if(angle >= 300 || angle <= 40) {
+                direction = SEARCHDIRECTION.RIGHT;
+            }
+            else if(angle >= 20 && angle <= 90) {
+                direction = SEARCHDIRECTION.DOWNRIGHT;
+            }
+            else if(angle >= 90 && angle <= 160) {
+                direction = SEARCHDIRECTION.DOWNLEFT
+            }
+            else if(angle >= 160 && angle <= 180) {
+                direction = SEARCHDIRECTION.LEFT;
+            }
+            else if(angle >= 180 && angle <= 270) {
+                direction = SEARCHDIRECTION.UPLEFT;
+            }
+            else if(angle >= 270 && angle <= 300) {
+                direction = SEARCHDIRECTION.UPRIGHT;
+            }
+            return direction;
+        } else {
+            let direction = -1;
+            let ggap = Math.sqrt(mostShortDistance * mostShortDistance - mostRealDistance * mostRealDistance);
+            let dog = ggap;
+            let hitPoint = v2(this.convertFirePoint.x + gap.x * dog, this.convertFirePoint.z + gap.z * dog);
+            let position = this.nodes[targetI][targetJ].getPosition();
+            let final = v2(hitPoint.x - position.x, hitPoint.y - position.z);
+            final = final.normalize();
+            let angle = Math.atan2(final.y, final.x) * 180 / Math.PI;
+            if(angle <= 0) {
+                angle += 360;
+            }
+            if(angle >= 300 || angle <= 40) {
+                direction = SEARCHDIRECTION.RIGHT;
+            }
+            else if(angle >= 20 && angle <= 90) {
+                direction = SEARCHDIRECTION.DOWNRIGHT;
+            }
+            else if(angle >= 90 && angle <= 160) {
+                direction = SEARCHDIRECTION.DOWNLEFT
+            }
+            else if(angle >= 160 && angle <= 180) {
+                direction = SEARCHDIRECTION.LEFT;
+            }
+            else if(angle >= 180 && angle <= 270) {
+                direction = SEARCHDIRECTION.UPLEFT;
+            }
+            else if(angle >= 270 && angle <= 300) {
+                direction = SEARCHDIRECTION.UPRIGHT;
+            }
+            return direction;
         }
-        if(angle >= 300 || angle <= 40) {
-            direction = SEARCHDIRECTION.RIGHT;
-        }
-        else if(angle >= 20 && angle <= 90) {
-            direction = SEARCHDIRECTION.DOWNRIGHT;
-        }
-        else if(angle >= 90 && angle <= 160) {
-            direction = SEARCHDIRECTION.DOWNLEFT
-        }
-        else if(angle >= 160 && angle <= 180) {
-            direction = SEARCHDIRECTION.LEFT;
-        }
-        else if(angle >= 180 && angle <= 270) {
-            direction = SEARCHDIRECTION.UPLEFT;
-        }
-        else if(angle >= 270 && angle <= 300) {
-            direction = SEARCHDIRECTION.UPRIGHT;
-        }
-        return direction;
+        
     }
 
 
@@ -895,7 +997,7 @@ export class GameMain3D extends Component {
                     }
                 } else {
                     let node = nodes[i][j];
-                    if(node) {
+                    if(node && val != -2) {
                         isEqual = false;
                     }
                 }

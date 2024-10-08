@@ -21,14 +21,17 @@ export class NotifyMgrCls {
     }
 
     public send(sub:string,args1=null,args2=null,args3=null, args4=null) {
-        let index = this.subject.indexOf(sub);
-        let funcs:Function[] = this.subscribes[index];
-        for(let i = 0; i < funcs.length; i++) {
-            let fun = funcs[i];
-            if(fun) {
-                fun(args1,args2,args3, args4);
+
+        setTimeout(() => {
+            let index = this.subject.indexOf(sub);
+            let funcs:Function[] = this.subscribes[index];
+            for(let i = 0; i < funcs.length; i++) {
+                let fun = funcs[i];
+                if(fun) {
+                    fun(args1,args2,args3, args4);
+                }
             }
-        }
+        }, 1);
     }
 
     public observe(type:string, callback:Function) {

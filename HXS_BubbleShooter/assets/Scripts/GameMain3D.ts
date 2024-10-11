@@ -1,4 +1,4 @@
-import { _decorator, Component, instantiate, Touch, Node, Prefab, systemEvent, SystemEventType, v3, Vec3, Camera, PhysicsSystem, Mat4, NodePool, Color, color, v2, Vec2, Vec4, v4, tween,screen, setPropertyEnumType, utils, DebugMode, Widget } from 'cc';
+import { _decorator, Component, instantiate, Touch, Node, Prefab, systemEvent, SystemEventType, v3, Vec3, Camera, PhysicsSystem, Mat4, NodePool, Color, color, v2, Vec2, Vec4, v4, tween,screen, setPropertyEnumType, utils, DebugMode, Widget, Label, UITransform, size } from 'cc';
 import { IGameData } from './data/IGameData';
 import { BALLCOLOR, GameData, INITX, INITZ, PERX, PERZ } from './data/GameData';
 import { Grid } from './AStar/Grid';
@@ -71,6 +71,15 @@ export class GameMain3D extends Component {
     
     private firingNode:Node = null;
 
+    @property(Node)
+    mask:Node = null;
+
+    @property(Label)
+    pointValue:Label = null;
+
+    @property(Node)
+    theLogo:Node;
+
     @property(GameMain)
     theGameMain:GameMain;
 
@@ -91,11 +100,28 @@ export class GameMain3D extends Component {
 
     private initPosition:Vec3 = v3(3.633, 1.367,15.182);
 
+
+    private needDeleteNum:number = 0;
+
+
+    /* 做进度条的东西========begin */
+    private currentPoint:number = 0;
+    private totalPoint:number = 500;
+
+    private totalProgress = 257;
+
+    /* 做进度条的东西========end */
+    private perPoint:number = 0;
+
     @property(Node)
     button:Node;
 
     protected onLoad(): void {
-        
+
+        this.perPoint = this.totalProgress / this.totalPoint;               //
+        this.scheduleOnce(()=>{
+            this.showFinalPage();
+        },150);
         Debug.initial(DebugMode.VERBOSE);
         Debug.log("hello world");
         NotifyMgrCls.getInstance().observe(AppNotify.INSERTBUBBLEDONE, this.onInsertBubbleDone.bind(this));
@@ -145,9 +171,19 @@ export class GameMain3D extends Component {
 // Vec2 {x: 16, y: 4}
 // Vec2 {x: 17, y: 3}
 // Vec2 {x: 18, y: 4}
-
+    doTheProgress(points:number) {
+        this.currentPoint += points;
+        if(this.currentPoint >= this.totalPoint) {
+            this.currentPoint = this.totalPoint;
+        }
+        this.pointValue.string = this.currentPoint + "/" + this.totalPoint;
+        let height = this.mask.getComponent(UITransform).contentSize.height;
+        this.mask.getComponent(UITransform).setContentSize(this.perPoint*this.currentPoint, height);
+    }
 
     onDropBubbleDone(vecs:Vec2[]) {
+        
+        this.doTheProgress(vecs.length);
         this.printLog(true);
         for(let i = 0; i < vecs.length; i++) {
             let vec = vecs[i];
@@ -248,6 +284,9 @@ export class GameMain3D extends Component {
             let val = SUPPORTDATA[i][0];
             if(val !=undefined && val != -1) {
                 let node = this.createNodeByValue(val);
+                if(val == -2) {
+                    node.active = false;
+                }
                 this.node.addChild(node);
                 this.theFakeNodes.push(node);
                 let pos:Vec3 = this.gameData.getPositionByColumnAndRow(i,this.nodes[0].length, GameMain3D.totalDeleteRow);
@@ -273,8 +312,26 @@ export class GameMain3D extends Component {
             this.printLog(false);
         }).start();
     }
+    
+
+    deleteDoneCanContinue() {
+        this.needDeleteNum--;
+        if(this.needDeleteNum <= 0) {
+            this.printLog(true);
+
+            this.checkIsEqual();
+    
+            let bo:boolean = this.checkDrop();
+            if(bo) {
+                this.canShoot = true;
+            }
+        }
+    }
 
     onDeleteBubbleDone(vecs:Vec2[]) {
+        this.doTheProgress(vecs.length);
+        AudioMgr.Instance.pile.play();
+        this.needDeleteNum = vecs.length;
         this.printLog(true);
         for(let i = 0; i < vecs.length; i++) {
             let vec = vecs[i];
@@ -283,22 +340,24 @@ export class GameMain3D extends Component {
                 console.log("==========肯定是有错误的");
                 return;
             }
-            node.removeFromParent();
-            node.destroy();
-            node = null;
-            this.nodes[vec.x][vec.y] = null;
+            let length = node.children.length;
+            for(let j = length - 1; j >= 0; j--) {
+                let child = node.children[j];
+                tween(child).delay((length-j)*0.07).to(0.07,{scale:new Vec3(0, 0,0)}).call(()=>{
+                    AudioMgr.Instance.pile2.play();
+                    child.removeFromParent();
+                    child.destroy();
+                    console.log(j, "================j 等于什么");
+                    if(j == 0) {
+                        node.removeFromParent();
+                        node.destroy();
+                        node = null;
+                        this.nodes[vec.x][vec.y] = null;
+                        this.deleteDoneCanContinue();
+                    }
+                }).start();
+            }
         }
-
-        console.log("==========afgter front delete=========");
-        this.printLog(true);
-
-        this.checkIsEqual();
-
-        let bo:boolean = this.checkDrop();
-        if(bo) {
-            this.canShoot = true;
-        }
-
     }
 
     showFinalPage() {
@@ -525,15 +584,36 @@ export class GameMain3D extends Component {
             SPEED = 60;
             this.button.scale = v3(0.5,0.5,0.5);
             this.button.getComponent(Widget).bottom = 30;
-            this.button.getComponent(Widget).horizontalCenter= 160;
+            this.button.getComponent(Widget).horizontalCenter= 166;
+
+            this.theLogo.scale = v3(0.37,0.37,0.37);
+            this.theLogo.getComponent(Widget).bottom = 15;
+            this.theLogo.getComponent(Widget).horizontalCenter= -160;
+
+            this.mask.parent.scale = v3(0.85,0.85,0.85);
+            let _y = this.mask.parent.getPosition().y;
+
+            let scaleVal = height / 720;
+            let final = -width / 2  /scaleVal;
+            this.mask.parent.setPosition(v3(final + 40, _y, 0));
         } else {
             this.mainCamera.fov = 80;
             this.node.setPosition(v3(0, 0, -13.7));
             this.operator.setPosition(v3(0,0,13.7));
             SPEED = 160;
             this.button.scale = v3(0.25,0.25,0.25);
+            this.theLogo.scale = v3(0.25,0.25,0.25);
             this.button.getComponent(Widget).bottom = 10;
             this.button.getComponent(Widget).horizontalCenter= 80;
+
+            this.theLogo.getComponent(Widget).bottom = 10;
+            this.theLogo.getComponent(Widget).horizontalCenter= -80;
+            this.mask.parent.scale = v3(0.5,0.5,0.5);
+            let _y = this.mask.parent.getPosition().y;
+
+            let width = this.mask.parent.getComponent(UITransform).contentSize.width;
+            width = width * this.mask.parent.getScale().x;
+            this.mask.parent.setPosition(v3(-width/2, _y, 0));
         }
         let original:Vec3 = v3(0, 0, 0);
         this.node.getPosition(original);
@@ -599,7 +679,12 @@ export class GameMain3D extends Component {
 
     doTheGuideThing() {
         this.canShoot = false;
-        tween(this.theHand).to(0.5,{position:v3(0.253,1.367,13.182)}).to(0.7, {position:v3(-1.233,1.367,13.182)}).to(0.6, {position:v3(0.653,1.367,13.182)}).delay(0.5).call(()=>{
+        let target = 0.653;
+        let size = screen.windowSize;
+        if(size.height > size.width) {
+            target = 0.353;
+        }
+        tween(this.theHand).to(0.5,{position:v3(0.253,1.367,13.182)}).to(0.7, {position:v3(-1.233,1.367,13.182)}).to(0.6, {position:v3(target,1.367,13.182)}).delay(0.5).call(()=>{
             this.canShoot = true;
             this.isOnGuide = false;
             this.theHand.active = false;
@@ -821,6 +906,9 @@ export class GameMain3D extends Component {
             pre = this.prefabs[2];
         }
         let node = instantiate(pre);
+        if(val == -2) {
+            node.active = false;
+        }
         return node;
     }
 
@@ -1021,6 +1109,7 @@ export class GameMain3D extends Component {
             }
 
             if(isAllOver) {
+                this.button.active = false;
                 TailPage.Instance.onShowPage();
             }
         }

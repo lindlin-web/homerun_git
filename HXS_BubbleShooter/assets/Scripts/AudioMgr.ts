@@ -17,6 +17,9 @@ export class AudioMgr extends Component {
    @property(MyAudioCpt)
    delet : MyAudioCpt;
 
+   @property(MyAudioCpt)
+   pile2 : MyAudioCpt;
+
    bPlayBgm = false;
 
    start() {

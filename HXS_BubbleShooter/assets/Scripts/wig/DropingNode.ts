@@ -1,4 +1,5 @@
 import { _decorator, Component, Node, v2, v3, Vec2, Vec3 } from 'cc';
+import { AudioMgr } from '../AudioMgr';
 const { ccclass, property } = _decorator;
 
 @ccclass('DropingNode')
@@ -22,7 +23,7 @@ export class DropingNode extends Component {
         let speedZ = Math.random() * 10 - 10;
         this.speed = v2(speedX, speedZ);
         this.isDoDroping = true;
-        
+        AudioMgr.Instance.delet.play();
     }
 
     update(deltaTime: number) {

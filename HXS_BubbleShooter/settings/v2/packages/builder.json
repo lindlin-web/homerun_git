@@ -2,5 +2,21 @@
   "__version__": "1.3.8",
   "textureCompressConfig": {
     "genMipmaps": false
+  },
+  "splash-setting": {
+    "logo": {
+      "type": "custom",
+      "image": "project://settings/LOGOGO.png"
+    },
+    "background": {
+      "type": "color",
+      "color": {
+        "x": 0.20392156862745098,
+        "y": 0.17254901960784313,
+        "z": 0.3843137254901961,
+        "w": 1
+      }
+    },
+    "displayRatio": 1.2
   }
 }

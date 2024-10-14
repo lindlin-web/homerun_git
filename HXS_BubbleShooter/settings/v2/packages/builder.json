@@ -5,18 +5,17 @@
   },
   "splash-setting": {
     "logo": {
-      "type": "custom",
-      "image": "project://settings/LOGOGO.png"
+      "image": "project://settings/NEW Hexa Sort Logo - PLEASE USE.png",
+      "type": "custom"
     },
     "background": {
-      "type": "color",
       "color": {
         "x": 0.20392156862745098,
         "y": 0.17254901960784313,
         "z": 0.3843137254901961,
         "w": 1
-      }
-    },
-    "displayRatio": 1.2
+      },
+      "type": "color"
+    }
   }
 }

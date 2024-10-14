@@ -1,4 +1,4 @@
-import { _decorator, Component, instantiate, Touch, Node, Prefab, systemEvent, SystemEventType, v3, Vec3, Camera, PhysicsSystem, Mat4, NodePool, Color, color, v2, Vec2, Vec4, v4, tween,screen, setPropertyEnumType, utils, DebugMode, Widget, Label, UITransform, size } from 'cc';
+import { _decorator, Component, instantiate, Touch, Node, Prefab, systemEvent, SystemEventType, v3, Vec3, Camera, PhysicsSystem, Mat4, NodePool, Color, color, v2, Vec2, Vec4, v4, tween,screen, setPropertyEnumType, utils, DebugMode, Widget, Label, UITransform, size, director } from 'cc';
 import { IGameData } from './data/IGameData';
 import { BALLCOLOR, GameData, INITX, INITZ, PERX, PERZ } from './data/GameData';
 import { Grid } from './AStar/Grid';
@@ -48,6 +48,10 @@ export class GameMain3D extends Component {
 
 
     private convertFirePoint:Vec3 = v3(0, 0.1, 18);
+
+    private convertFirePoint1:Vec3 = v3(0, 0.1, 19);
+
+    private convertFirePoint2:Vec3 = v3(0, 0.1, 12);
 
     @property(Prefab)
     dotNode:Prefab = null;          // 就是那个点虚线的预制体...
@@ -114,7 +118,16 @@ export class GameMain3D extends Component {
     private perPoint:number = 0;
 
     @property(Node)
+    head:Node = null;
+
+    @property(Node)
     button:Node;
+
+    @property(Node)
+    circle:Node;
+
+    @property(Node)
+    icon:Node;
 
     protected onLoad(): void {
 
@@ -155,6 +168,9 @@ export class GameMain3D extends Component {
         this.backupNode.setPosition(this.operator.getComponent(OperateNode).backPosition);
 
         
+        this.operator.getComponent(OperateNode).setFireNode(this.fireNode);
+        this.operator.getComponent(OperateNode).setBackNode(this.backupNode);
+
         screen.on("window-resize", this.onWindowResize.bind(this), this);
         let size = screen.windowSize;
         this.onWindowResize(size.width, size.height);
@@ -175,6 +191,10 @@ export class GameMain3D extends Component {
         this.currentPoint += points;
         if(this.currentPoint >= this.totalPoint) {
             this.currentPoint = this.totalPoint;
+            this.scheduleOnce(()=>{
+                TailPage.Instance.onShowPage();
+            }, 1.0);
+            
         }
         this.pointValue.string = this.currentPoint + "/" + this.totalPoint;
         let height = this.mask.getComponent(UITransform).contentSize.height;
@@ -209,28 +229,32 @@ export class GameMain3D extends Component {
         }
         this.printLog(true);
         this.scheduleOnce(()=>{
-            // 基本上，删除的行， 和 补给的行是一样的..
-            let deleteAndSupport:Vec2 = this.gameData.checkToSupport();     // 看看是否还有可以补给..
-
-            console.log("===================how many support ====", deleteAndSupport.y);
-            console.log("====================before front support");
-            this.printLog(true);
-            // 这个地方，还必须把this.nodes里面对应的数据给清空一下...
-            for(let i = 0; i < deleteAndSupport.y; i++) {
-                
-                for(let j = 0; j < this.nodes.length; j++) {
-                    let nodes = this.nodes[j];
-                    nodes.shift();
-                }
-            }
-            console.log("====================after front support");
-            this.printLog(true);
-
-            GameMain3D.totalDeleteRow += deleteAndSupport.y;
-
-            this.doTheSupport(deleteAndSupport.y);                // 添加供给进去....
-
+            this.checkCanBeSupported();
         }, 1);
+    }
+
+    checkCanBeSupported() {
+
+        // 基本上，删除的行， 和 补给的行是一样的..
+        let deleteAndSupport:Vec2 = this.gameData.checkToSupport();     // 看看是否还有可以补给..
+
+        console.log("===================how many support ====", deleteAndSupport.y);
+        console.log("====================before front support");
+        this.printLog(true);
+        // 这个地方，还必须把this.nodes里面对应的数据给清空一下...
+        for(let i = 0; i < deleteAndSupport.y; i++) {
+            
+            for(let j = 0; j < this.nodes.length; j++) {
+                let nodes = this.nodes[j];
+                nodes.shift();
+            }
+        }
+        console.log("====================after front support");
+        this.printLog(true);
+
+        GameMain3D.totalDeleteRow += deleteAndSupport.y;
+
+        this.doTheSupport(deleteAndSupport.y);                // 添加供给进去....
     }
 
     /** 把供给填充进去 */
@@ -312,18 +336,19 @@ export class GameMain3D extends Component {
             this.printLog(false);
         }).start();
     }
-    
 
     deleteDoneCanContinue() {
         this.needDeleteNum--;
+        let retVal = false;
         if(this.needDeleteNum <= 0) {
             this.printLog(true);
 
             this.checkIsEqual();
     
-            let bo:boolean = this.checkDrop();
+            let bo:boolean = this.checkDrop();      // true 是没有掉落，可以继续， false是有掉落，不能前进.
             if(bo) {
                 this.canShoot = true;
+                this.checkCanBeSupported();
             }
         }
     }
@@ -577,17 +602,18 @@ export class GameMain3D extends Component {
     }
 
     onWindowResize(width:number, height:number) {
+        let dogWidth = width;
         if(width > height) {
             this.mainCamera.fov = 45;
             this.node.setPosition(v3(0, 0, 0));
             this.operator.setPosition(v3(0, 0,0));
             SPEED = 60;
-            this.button.scale = v3(0.5,0.5,0.5);
+            this.button.scale = v3(0.40,0.40,0.40);
             this.button.getComponent(Widget).bottom = 30;
-            this.button.getComponent(Widget).horizontalCenter= 166;
+            this.button.getComponent(Widget).horizontalCenter= 146;
 
-            this.theLogo.scale = v3(0.37,0.37,0.37);
-            this.theLogo.getComponent(Widget).bottom = 15;
+            this.theLogo.scale = v3(0.45,0.45,0.45);
+            this.theLogo.getComponent(Widget).bottom = 20;
             this.theLogo.getComponent(Widget).horizontalCenter= -160;
 
             this.mask.parent.scale = v3(0.85,0.85,0.85);
@@ -596,17 +622,23 @@ export class GameMain3D extends Component {
             let scaleVal = height / 720;
             let final = -width / 2  /scaleVal;
             this.mask.parent.setPosition(v3(final + 40, _y, 0));
+            this.head.active = false;
+
+            this.circle.scale = v3(1.0, 1.0,1.0);
+            this.convertFirePoint = this.convertFirePoint1.clone();
+
+            this.operator.getComponent(OperateNode).setWidthOrHeight(1);
         } else {
             this.mainCamera.fov = 80;
-            this.node.setPosition(v3(0, 0, -13.7));
-            this.operator.setPosition(v3(0,0,13.7));
+            this.node.setPosition(v3(0, 0, -1.9));
+            this.operator.setPosition(v3(0,0,7.8));
             SPEED = 160;
             this.button.scale = v3(0.25,0.25,0.25);
-            this.theLogo.scale = v3(0.25,0.25,0.25);
-            this.button.getComponent(Widget).bottom = 10;
-            this.button.getComponent(Widget).horizontalCenter= 80;
+            this.theLogo.scale = v3(0.32,0.32,0.32);
+            this.button.getComponent(Widget).bottom = 35;
+            this.button.getComponent(Widget).horizontalCenter= 60;
 
-            this.theLogo.getComponent(Widget).bottom = 10;
+            this.theLogo.getComponent(Widget).bottom = 35;
             this.theLogo.getComponent(Widget).horizontalCenter= -80;
             this.mask.parent.scale = v3(0.5,0.5,0.5);
             let _y = this.mask.parent.getPosition().y;
@@ -614,6 +646,15 @@ export class GameMain3D extends Component {
             let width = this.mask.parent.getComponent(UITransform).contentSize.width;
             width = width * this.mask.parent.getScale().x;
             this.mask.parent.setPosition(v3(-width/2, _y, 0));
+            this.head.active = true;
+            this.circle.scale = v3(1.5, 1.5,1.5);
+            this.convertFirePoint = this.convertFirePoint2.clone();
+            this.operator.getComponent(OperateNode).setWidthOrHeight(2);
+
+            let sss = height / 720;
+            let myWidth = dogWidth / sss;
+            this.icon.setPosition(v3(-myWidth / 2, 0, 0));
+
         }
         let original:Vec3 = v3(0, 0, 0);
         this.node.getPosition(original);

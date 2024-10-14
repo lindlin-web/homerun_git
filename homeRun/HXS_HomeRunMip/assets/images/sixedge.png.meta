@@ -2,16 +2,16 @@
   "ver": "1.0.27",
   "importer": "image",
   "imported": true,
-  "uuid": "0bfd1cca-13bf-45e4-b809-4401e2403411",
+  "uuid": "e40eec6e-879f-43bf-a925-edf1642db239",
   "files": [
-    ".jpg",
-    ".json"
+    ".json",
+    ".png"
   ],
   "subMetas": {
     "6c48a": {
       "importer": "texture",
-      "uuid": "0bfd1cca-13bf-45e4-b809-4401e2403411@6c48a",
-      "displayName": "T_dibu_1",
+      "uuid": "e40eec6e-879f-43bf-a925-edf1642db239@6c48a",
+      "displayName": "sixedge",
       "id": "6c48a",
       "name": "texture",
       "userData": {
@@ -22,7 +22,7 @@
         "mipfilter": "none",
         "anisotropy": 0,
         "isUuid": true,
-        "imageUuidOrDatabaseUri": "0bfd1cca-13bf-45e4-b809-4401e2403411",
+        "imageUuidOrDatabaseUri": "e40eec6e-879f-43bf-a925-edf1642db239",
         "visible": false
       },
       "ver": "1.0.22",
@@ -34,9 +34,9 @@
     }
   },
   "userData": {
-    "hasAlpha": false,
+    "hasAlpha": true,
     "type": "texture",
     "fixAlphaTransparencyArtifacts": false,
-    "redirect": "0bfd1cca-13bf-45e4-b809-4401e2403411@6c48a"
+    "redirect": "e40eec6e-879f-43bf-a925-edf1642db239@6c48a"
   }
 }

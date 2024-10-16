@@ -59,11 +59,11 @@ export class GameMain extends Component {
     public theEffect:Prefab;
 
     private groupStatus = [
-        [-1, 0, 0, 0, -1,],
-        [ 0, 0, 0, 0, 0,],
-        [ 0, 0, 0, 0, 0,],
-        [ 0, 0, 0, 0, 0,],
-        [-1,-1, 0,-1,-1,]
+        [-1, 2, 0, 4, -1,],
+        [ 1,0, 0, 0, 3,],
+        [ 2, 1, 0, 5, 4,],
+        [ 3, 4, 2, 1, 2,],
+        [-1,-1, 3,-1,-1,]
     ];
 
 
@@ -147,7 +147,7 @@ export class GameMain extends Component {
         this.pushNode3.active = false;
         this.pushNodes = [this.pushNode, this.pushNode2, this.pushNode3];
 
-        this.scheduleOnce(this.onFinished.bind(this), 30);
+        this.scheduleOnce(this.onFinished.bind(this), 91);
         this.manager = new GameManager();
         this.manager.init(this);
 
@@ -223,7 +223,7 @@ export class GameMain extends Component {
         
         systemEvent.on(SystemEventType.TOUCH_START, (touch:Touch) => {
             this.hand.active = false;
-            TailPage.Instance.clickDown();
+            //TailPage.Instance.clickDown();
             AudioMgr.Instance.PlayBgm();
             if(this.isOnGuidePart) {
                 return;

@@ -1,11 +1,14 @@
-import { __private, _decorator, CCBoolean, CCFloat, Component, gfx, Node, RenderData, Sprite, Vec2 } from 'cc';
+import { __private, _decorator, CCBoolean, CCFloat, Component, gfx, Node, RenderData, resources, Sprite, SpriteFrame, Texture2D, v3, Vec2 } from 'cc';
 import { rotateAssembler } from './rotateAssembler';
+import { TheData } from '../Data/TheData';
+import { AppNotify, NotifyMgrCls } from '../Controller/AppNotify';
 const { ccclass, property } = _decorator;
 
 @ccclass('RotateSprite')
 export class RotateSprite extends Sprite {
     
 
+    private _isReady:boolean = false;       // 是否已经准备好了呢...
     @property({ type: CCFloat })
     private _rotateSpeed: number = 1;
     @property({ type: Vec2 })
@@ -32,8 +35,43 @@ export class RotateSprite extends Sprite {
         // 😀😀😀 结束 😀😀😀
     }
 
+    private _rightToLeft:boolean = true;
+    private _angle:number = 180;
+    private _waitTime = 0;
+
     public get rotateCenter(): Vec2 {
         return this._rotateCenter;
+    }
+
+    private leftToRight:number = 0;
+
+    private myIndex:number = 0;
+
+    onLoad(): void {
+        this.leftToRight = Math.random() > 0.5 ? 0 : 1;
+    }
+
+    /** 加载对应的素材 */
+    public setIndex(index:number) {
+        this.myIndex = index;
+        let url = TheData.getInstance().getUrlByIndex(index);
+        let scale = TheData.getInstance().getScaleByIndex(index);
+        resources.load(url,Texture2D,(err,data)=>{
+            if(!err){
+                let sp = new SpriteFrame();
+                sp.texture = data!;
+                this.node.getComponent(Sprite).spriteFrame = sp;
+                this._isReady = true;
+
+                this._assembler.angle = 0;
+                if(this.leftToRight > 0) {
+                    this._assembler.updateVertexDataLeftToRight(this);
+                }
+                else {
+                    this._assembler.updateVertexDataRightToLeft(this);
+                }
+            }
+        });
     }
 
     @property({ type: Vec2 })
@@ -124,6 +162,15 @@ export class RotateSprite extends Sprite {
 
     public start(): void {
         this.scheduleOnce(() => {
+            this._assembler.angle = 0;
+
+            if(this.leftToRight > 0) {
+                this._assembler.updateVertexDataLeftToRight(this);
+            }
+            else {
+                this._assembler.updateVertexDataRightToLeft(this);
+            }
+
             this._updateCustomVertexData();
         }, 0);
     }
@@ -164,6 +211,46 @@ export class RotateSprite extends Sprite {
         // }
     }
 
+    protected update(dt: number): void {
+        let anglePerDt = 140;
+        let result = 0;
+        if(!this._isReady) {
+            return;
+        }
+        if(this._rightToLeft) {
+            this._angle += dt * anglePerDt;
+            result = this._angle;
+            if(this._angle > 170) {
+                this._angle = 170
+                this._rightToLeft = false;
+            }
+        } else {
+            this._angle -= dt * anglePerDt
+            result = this._angle;
+            if(this._angle < 0) {
+                this._angle = 0
+                NotifyMgrCls.getInstance().send(AppNotify.CoverAnimationDone,this.myIndex);
+                this._isReady = false;
+                this.scheduleOnce(()=>{
+                    this.node.removeFromParent();
+                },0.07);
+                
+                if(this._waitTime++ > 10) {
+                    this._rightToLeft = true
+                    this._waitTime = 0
+                }
+            }
+        }
+
+        this._assembler.angle = result;
+
+        if(this.leftToRight > 0) {
+            this._assembler.updateVertexDataLeftToRight(this);
+        }
+        else {
+            this._assembler.updateVertexDataRightToLeft(this);
+        }
+    }
     public getPointCount() {
         return this.pointsCount;
     }

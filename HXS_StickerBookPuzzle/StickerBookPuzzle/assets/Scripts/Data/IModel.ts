@@ -1,4 +1,6 @@
 
+
+
 export interface IModel {
 
     setTime(val:number):void;   // 设置成功的次数        

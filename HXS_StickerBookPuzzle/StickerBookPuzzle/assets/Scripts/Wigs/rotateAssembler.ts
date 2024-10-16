@@ -38,14 +38,13 @@ let QUAD_INDICES = Uint16Array.from([0, 1, 2, 1, 3, 2,4,5,6,5,7,6]);
 export const rotateAssembler: IAssembler = {
     createData (sprite: RotateSprite) {
 
-
         let segmentCount = sprite.getPointCount()-1;
         let verticesCount = segmentCount * 4;
         let indicesCount = segmentCount *  6;
         const renderData = sprite.requestRenderData();
         renderData.dataLength = verticesCount;
         renderData.resize(verticesCount, indicesCount);
-        renderData.vertexRow = verticesCount;
+        renderData.vertexRow = 2;
         renderData.vertexCol = 2;
 
         
@@ -61,9 +60,10 @@ export const rotateAssembler: IAssembler = {
         //this.updateColor(sprite);// dirty need
 
         const renderData = sprite.renderData;
+        renderData.vertDirty = true;
         if (renderData && frame) {
             if (renderData.vertDirty) {
-                this.updateVertexData(sprite);
+                this.updateVertexDataLeftToRight(sprite);
                 // 😀😀😀 开始 😀😀😀
                 this.updateCustomVertexData(sprite);
                 // 😀😀😀 结束 😀😀😀
@@ -107,7 +107,7 @@ export const rotateAssembler: IAssembler = {
         }
     },
 
-    fillBuffers (sprite: Sprite, renderer: any) {
+    fillBuffers (sprite: RotateSprite, renderer: any) {
         if (sprite === null) {
             return;
         }
@@ -122,7 +122,6 @@ export const rotateAssembler: IAssembler = {
             // 😀😀😀 结束 😀😀😀
             renderData.vertDirty = false;
         }
-
         // quick version
         const bid = chunk.bufferId;
         const vidOrigin = chunk.vertexOffset;
@@ -131,50 +130,60 @@ export const rotateAssembler: IAssembler = {
         let indexOffset = meshBuffer.indexOffset;
 
         // rect count = vertex count - 1
-        for (let curRow = 0; curRow < renderData.vertexRow - 1; curRow++) {
-            for (let curCol = 0; curCol < renderData.vertexCol - 1; curCol++) {
-                // vid is the index of the left bottom vertex in each rect.
-                const vid = vidOrigin + curRow * renderData.vertexCol + curCol;
+        // for (let curRow = 0; curRow < renderData.vertexRow - 1; curRow++) {
+        //     for (let curCol = 0; curCol < renderData.vertexCol - 1; curCol++) {
+        //         // vid is the index of the left bottom vertex in each rect.
+        //         const vid = vidOrigin + curRow * renderData.vertexCol + curCol;
 
-                // left bottom
-                ib[indexOffset++] = vid;
-                // right bottom
-                ib[indexOffset++] = vid + 1;
-                // left top
-                ib[indexOffset++] = vid + 2;
+        //         // left bottom
+        //         ib[indexOffset++] = vid;
+        //         // right bottom
+        //         ib[indexOffset++] = vid + 1;
+        //         // left top
+        //         ib[indexOffset++] = vid + 2;
 
-                // right bottom
-                ib[indexOffset++] = vid + 1;
-                // right top
-                ib[indexOffset++] = vid + 3;
-                // left top
-                ib[indexOffset++] = vid + 2;
+        //         // right bottom
+        //         ib[indexOffset++] = vid + 1;
+        //         // right top
+        //         ib[indexOffset++] = vid + 3;
+        //         // left top
+        //         ib[indexOffset++] = vid + 2;
 
-                // IndexOffset should add 6 when vertices of a rect are visited.
-                meshBuffer.indexOffset += 6;
-            }
+        //         // IndexOffset should add 6 when vertices of a rect are visited.
+        //         //meshBuffer.indexOffset += 6;
+        //     }
+        // }
+
+        let segmentCount = sprite.getPointCount()-1;
+        indexOffset = meshBuffer.indexOffset;
+        for(let i = 0; i < segmentCount; i++) {
+            let vid = vidOrigin + i * 3;
+
+            // left bottom
+            ib[indexOffset++] = vid;
+            // right bottom
+            ib[indexOffset++] = vid + 1;
+            // left top
+            ib[indexOffset++] = vid + 2;
+
+            // right bottom
+            ib[indexOffset++] = vid + 1;
+            // right top
+            ib[indexOffset++] = vid + 3;
+            // left top
+            ib[indexOffset++] = vid + 2;
+
+            // IndexOffset should add 6 when vertices of a rect are visited.
+
+            meshBuffer.indexOffset += 6;
         }
-        indexOffset = 0;
-        let vid = 0;
-        // left bottom
-        ib[indexOffset++] = vid;
-        // right bottom
-        ib[indexOffset++] = vid + 1;
-        // left top
-        ib[indexOffset++] = vid + 2;
-
-        // right bottom
-        ib[indexOffset++] = vid + 1;
-        // right top
-        ib[indexOffset++] = vid + 3;
-        // left top
-        ib[indexOffset++] = vid + 2;
+        
 
         // slow version
         // renderer.switchBufferAccessor().appendIndices(chunk);
     },
 
-    updateVertexData (sprite: RotateSprite) {
+    updateVertexDataLeftToRight (sprite: RotateSprite) {
         const renderData: RenderData | null = sprite.renderData;
         if (!renderData) {
             return;
@@ -216,7 +225,7 @@ export const rotateAssembler: IAssembler = {
         let posX = - width * uiTrans.anchorX;
         let posY = - height * uiTrans.anchorY;
         // 根据角度获得控制点的位置
-        let ctrlPosData = this._getCtrlPosByAngle(width)
+        let ctrlPosData = this._getCtrlPosByAngle(width);
         let startPos = ctrlPosData.startPos
         let endPos = ctrlPosData.endPos
         let ctrlPos1 = ctrlPosData.ctrlPos1
@@ -239,7 +248,7 @@ export const rotateAssembler: IAssembler = {
             let lastBezierPos = bezierPosList[i - 1]
             let nextBezierPos = this._getBezierPos(i / (pointNum - 1) , startPos.clone(), endPos.clone(), ctrlPos1.clone(), ctrlPos2.clone())
             let fixedData = this._fixWidth(lastBezierPos.clone(), nextBezierPos.clone(), width, realWidth, isTail)
-            let gapWidth = fixedData.gapWidth
+            let gapWidth = fixedData.gapWidth;
             nextBezierPos = fixedData.nextBezierPos;
             realWidth += gapWidth
             bezierPosList[i] = nextBezierPos.clone();
@@ -269,7 +278,375 @@ export const rotateAssembler: IAssembler = {
             dataList[dstOffset+3].v = 0;
             lastU = nextU
         }
-        console.log(dataList, "==========dataList");
+        renderData.vertDirty = true;
+    },
+
+
+
+    updateVertexDataRightToLeft (sprite: RotateSprite) {
+        const renderData: RenderData | null = sprite.renderData;
+        if (!renderData) {
+            return;
+        }
+
+        const uiTrans = sprite.node._uiProps.uiTransformComp!;
+        const dataList: IRenderData[] = renderData.data;
+        const cw = uiTrans.width;
+        const ch = uiTrans.height;
+        const appX = uiTrans.anchorX * cw;
+        const appY = uiTrans.anchorY * ch;
+        let l = 0;
+        let b = 0;
+        let r = 0;
+        let t = 0;
+        if (sprite.trim) {
+            l = -appX;
+            b = -appY;
+            r = cw - appX;
+            t = ch - appY;
+        } else {
+            const frame = sprite.spriteFrame!;
+            const originSize = frame.originalSize;
+            const ow = originSize.width;
+            const oh = originSize.height;
+            const scaleX = cw / ow;
+            const scaleY = ch / oh;
+            const trimmedBorder = frame.trimmedBorder;
+            l = trimmedBorder.x * scaleX - appX;
+            b = trimmedBorder.z * scaleY - appY;
+            r = cw + trimmedBorder.y * scaleX - appX;
+            t = ch + trimmedBorder.w * scaleY - appY;
+        }
+
+        let pointNum: number = sprite.getPointCount();
+        let width = cw;
+        let height = ch;
+        // 左下角的坐标
+        let posX = width * uiTrans.anchorX;
+        let posY = - height * uiTrans.anchorY;
+        // 根据角度获得控制点的位置
+        let ctrlPosData = this._getCtrlPosByAngle(width);
+        let startPos = ctrlPosData.startPos
+        let endPos = ctrlPosData.endPos
+        let ctrlPos1 = ctrlPosData.ctrlPos1
+        let ctrlPos2 = ctrlPosData.ctrlPos2
+        // 记录各个顶点的位置
+        let bezierPosList: Vec2[] = []
+        bezierPosList[0] = startPos
+        // 当前所有顶点连线的总长
+        let realWidth = 0
+        // 上一个点的纹理坐标
+        let lastU = 0
+        // 下一个点的纹理坐标
+        let nextU = 0
+        // 写verts时的下标
+        let dstOffset = 0;
+
+        const floatsPerVert = renderData.floatStride;
+        for(let i  = 1; i < pointNum; i++) {
+            let isTail = i === pointNum - 1
+            let lastBezierPos = bezierPosList[i - 1]
+            let nextBezierPos = this._getBezierPos(i / (pointNum - 1) , startPos.clone(), endPos.clone(), ctrlPos1.clone(), ctrlPos2.clone())
+            let fixedData = this._fixWidth(lastBezierPos.clone(), nextBezierPos.clone(), width, realWidth, isTail)
+            let gapWidth = fixedData.gapWidth;
+            nextBezierPos = fixedData.nextBezierPos;
+            realWidth += gapWidth
+            bezierPosList[i] = nextBezierPos.clone();
+            // 根据当前小矩形的宽度占总长度的比例来计算纹理坐标的间隔
+            let gapU = gapWidth / width
+            nextU = lastU + gapU;
+
+            dstOffset = (i-1) * 4;
+            dataList[dstOffset].x = posX - lastBezierPos.x;
+            dataList[dstOffset].y = posY + lastBezierPos.y;
+            dataList[dstOffset].u = 1-lastU;
+            dataList[dstOffset].v = 1;
+
+            dataList[dstOffset+1].x = posX - nextBezierPos.x;
+            dataList[dstOffset+1].y = posY + nextBezierPos.y;
+            dataList[dstOffset+1].u = 1-nextU;
+            dataList[dstOffset+1].v = 1;
+
+            dataList[dstOffset+2].x = posX - lastBezierPos.x;
+            dataList[dstOffset+2].y = posY + height + lastBezierPos.y;
+            dataList[dstOffset+2].u = 1-lastU;
+            dataList[dstOffset+2].v = 0;
+
+            dataList[dstOffset+3].x = posX - nextBezierPos.x;
+            dataList[dstOffset+3].y = posY + height + nextBezierPos.y;
+            dataList[dstOffset+3].u = 1-nextU;
+            dataList[dstOffset+3].v = 0;
+            lastU = nextU
+        }
+        renderData.vertDirty = true;
+    },
+
+
+
+    updateVertexDataTopToBottom (sprite: RotateSprite) {
+        const renderData: RenderData | null = sprite.renderData;
+        if (!renderData) {
+            return;
+        }
+
+        const uiTrans = sprite.node._uiProps.uiTransformComp!;
+        const dataList: IRenderData[] = renderData.data;
+        const cw = uiTrans.width;
+        const ch = uiTrans.height;
+        const appX = uiTrans.anchorX * cw;
+        const appY = uiTrans.anchorY * ch;
+        let l = 0;
+        let b = 0;
+        let r = 0;
+        let t = 0;
+        if (sprite.trim) {
+            l = -appX;
+            b = -appY;
+            r = cw - appX;
+            t = ch - appY;
+        } else {
+            const frame = sprite.spriteFrame!;
+            const originSize = frame.originalSize;
+            const ow = originSize.width;
+            const oh = originSize.height;
+            const scaleX = cw / ow;
+            const scaleY = ch / oh;
+            const trimmedBorder = frame.trimmedBorder;
+            l = trimmedBorder.x * scaleX - appX;
+            b = trimmedBorder.z * scaleY - appY;
+            r = cw + trimmedBorder.y * scaleX - appX;
+            t = ch + trimmedBorder.w * scaleY - appY;
+        }
+
+        let pointNum: number = sprite.getPointCount();
+        let width = cw;
+        let height = ch;
+        // 左下角的坐标
+        let posX =  height * uiTrans.anchorX;
+        let posY = -width * uiTrans.anchorY;
+        // 根据角度获得控制点的位置
+        let ctrlPosData = this._getCtrlPosByAngle(height);
+        let startPos = ctrlPosData.startPos;
+        let endPos = ctrlPosData.endPos;
+        let ctrlPos1 = ctrlPosData.ctrlPos1;
+        let ctrlPos2 = ctrlPosData.ctrlPos2;
+        // 记录各个顶点的位置
+        let bezierPosList: Vec2[] = []
+        bezierPosList[0] = startPos
+        // 当前所有顶点连线的总长
+        let realWidth = 0
+        // 上一个点的纹理坐标
+        let lastU = 0
+        // 下一个点的纹理坐标
+        let nextU = 0
+        // 写verts时的下标
+        let dstOffset = 0;
+
+        const floatsPerVert = renderData.floatStride;
+        for(let i  = 1; i < pointNum; i++) {
+            let isTail = i === pointNum - 1
+            let lastBezierPos = bezierPosList[i - 1]
+            let nextBezierPos = this._getBezierPos(i / (pointNum - 1) , startPos.clone(), endPos.clone(), ctrlPos1.clone(), ctrlPos2.clone())
+            let fixedData = this._fixWidth(lastBezierPos.clone(), nextBezierPos.clone(), width, realWidth, isTail)
+            let gapWidth = fixedData.gapWidth;
+            nextBezierPos = fixedData.nextBezierPos;
+            realWidth += gapWidth
+            bezierPosList[i] = nextBezierPos.clone();
+            // 根据当前小矩形的宽度占总长度的比例来计算纹理坐标的间隔
+            let gapU = gapWidth / width
+            nextU = lastU + gapU;
+
+            dstOffset = (i-1) * 4;
+            dataList[dstOffset].x = posX - lastBezierPos.x;
+            dataList[dstOffset].y = posY + lastBezierPos.y;
+            dataList[dstOffset].u = lastU;
+            dataList[dstOffset].v = 0;
+
+            dataList[dstOffset+1].x = posX - nextBezierPos.x;
+            dataList[dstOffset+1].y = posY + nextBezierPos.y;
+            dataList[dstOffset+1].u = nextU;
+            dataList[dstOffset+1].v = 0;
+
+            dataList[dstOffset+2].x = posX - lastBezierPos.x;
+            dataList[dstOffset+2].y = posY + width + lastBezierPos.y;
+            dataList[dstOffset+2].u = lastU;
+            dataList[dstOffset+2].v = 1;
+
+            dataList[dstOffset+3].x = posX - nextBezierPos.x;
+            dataList[dstOffset+3].y = posY + width + nextBezierPos.y;
+            dataList[dstOffset+3].u = nextU;
+            dataList[dstOffset+3].v = 1;
+            lastU = nextU
+        }
+        for(let i = 1; i < pointNum; i++) {
+            dstOffset = (i-1) * 4;
+            let temp = dataList[dstOffset].x;
+            dataList[dstOffset].x = dataList[dstOffset].y;
+            dataList[dstOffset].y = temp;
+
+            temp = dataList[dstOffset].u;
+            dataList[dstOffset].u = dataList[dstOffset].v;
+            dataList[dstOffset].v = temp;
+
+            temp = dataList[dstOffset+1].x;
+            dataList[dstOffset+1].x = dataList[dstOffset+1].y;
+            dataList[dstOffset+1].y = temp;
+
+            temp = dataList[dstOffset+1].u;
+            dataList[dstOffset+1].u = dataList[dstOffset+1].v;
+            dataList[dstOffset+1].v = temp;
+
+            temp = dataList[dstOffset+2].x;
+            dataList[dstOffset+2].x = dataList[dstOffset+2].y;
+            dataList[dstOffset+2].y = temp;
+
+            temp = dataList[dstOffset+2].u;
+            dataList[dstOffset+2].u = dataList[dstOffset+2].v;
+            dataList[dstOffset+2].v = temp;
+
+
+            temp = dataList[dstOffset+3].x;
+            dataList[dstOffset+3].x = dataList[dstOffset+3].y;
+            dataList[dstOffset+3].y = temp;
+
+            temp = dataList[dstOffset+3].u;
+            dataList[dstOffset+3].u = dataList[dstOffset+3].v;
+            dataList[dstOffset+3].v = temp;
+        }
+        renderData.vertDirty = true;
+    },
+
+
+    updateVertexDataBottomToTop (sprite: RotateSprite) {
+        const renderData: RenderData | null = sprite.renderData;
+        if (!renderData) {
+            return;
+        }
+
+        const uiTrans = sprite.node._uiProps.uiTransformComp!;
+        const dataList: IRenderData[] = renderData.data;
+        const cw = uiTrans.width;
+        const ch = uiTrans.height;
+        const appX = uiTrans.anchorX * cw;
+        const appY = uiTrans.anchorY * ch;
+        let l = 0;
+        let b = 0;
+        let r = 0;
+        let t = 0;
+        if (sprite.trim) {
+            l = -appX;
+            b = -appY;
+            r = cw - appX;
+            t = ch - appY;
+        } else {
+            const frame = sprite.spriteFrame!;
+            const originSize = frame.originalSize;
+            const ow = originSize.width;
+            const oh = originSize.height;
+            const scaleX = cw / ow;
+            const scaleY = ch / oh;
+            const trimmedBorder = frame.trimmedBorder;
+            l = trimmedBorder.x * scaleX - appX;
+            b = trimmedBorder.z * scaleY - appY;
+            r = cw + trimmedBorder.y * scaleX - appX;
+            t = ch + trimmedBorder.w * scaleY - appY;
+        }
+
+        let pointNum: number = sprite.getPointCount();
+        let width = cw;
+        let height = ch;
+        // 左下角的坐标
+        let posX =  -height * uiTrans.anchorX;
+        let posY = -width * uiTrans.anchorY;
+        // 根据角度获得控制点的位置
+        let ctrlPosData = this._getCtrlPosByAngle(height);
+        let startPos = ctrlPosData.startPos;
+        let endPos = ctrlPosData.endPos;
+        let ctrlPos1 = ctrlPosData.ctrlPos1;
+        let ctrlPos2 = ctrlPosData.ctrlPos2;
+        // 记录各个顶点的位置
+        let bezierPosList: Vec2[] = []
+        bezierPosList[0] = startPos
+        // 当前所有顶点连线的总长
+        let realWidth = 0
+        // 上一个点的纹理坐标
+        let lastU = 0
+        // 下一个点的纹理坐标
+        let nextU = 0
+        // 写verts时的下标
+        let dstOffset = 0;
+
+        const floatsPerVert = renderData.floatStride;
+        for(let i  = 1; i < pointNum; i++) {
+            let isTail = i === pointNum - 1
+            let lastBezierPos = bezierPosList[i - 1]
+            let nextBezierPos = this._getBezierPos(i / (pointNum - 1) , startPos.clone(), endPos.clone(), ctrlPos1.clone(), ctrlPos2.clone())
+            let fixedData = this._fixWidth(lastBezierPos.clone(), nextBezierPos.clone(), width, realWidth, isTail)
+            let gapWidth = fixedData.gapWidth;
+            nextBezierPos = fixedData.nextBezierPos;
+            realWidth += gapWidth
+            bezierPosList[i] = nextBezierPos.clone();
+            // 根据当前小矩形的宽度占总长度的比例来计算纹理坐标的间隔
+            let gapU = gapWidth / width
+            nextU = lastU + gapU;
+
+            dstOffset = (i-1) * 4;
+            dataList[dstOffset].x = posX + lastBezierPos.x;
+            dataList[dstOffset].y = posY + lastBezierPos.y;
+            dataList[dstOffset].u = 1-lastU;
+            dataList[dstOffset].v = 0;
+
+            dataList[dstOffset+1].x = posX + nextBezierPos.x;
+            dataList[dstOffset+1].y = posY + nextBezierPos.y;
+            dataList[dstOffset+1].u = 1-nextU;
+            dataList[dstOffset+1].v = 0;
+
+            dataList[dstOffset+2].x = posX + lastBezierPos.x;
+            dataList[dstOffset+2].y = posY + width + lastBezierPos.y;
+            dataList[dstOffset+2].u = 1-lastU;
+            dataList[dstOffset+2].v = 1;
+
+            dataList[dstOffset+3].x = posX + nextBezierPos.x;
+            dataList[dstOffset+3].y = posY + width + nextBezierPos.y;
+            dataList[dstOffset+3].u = 1-nextU;
+            dataList[dstOffset+3].v = 1;
+            lastU = nextU
+        }
+        for(let i = 1; i < pointNum; i++) {
+            dstOffset = (i-1) * 4;
+            let temp = dataList[dstOffset].x;
+            dataList[dstOffset].x = dataList[dstOffset].y;
+            dataList[dstOffset].y = temp;
+
+            temp = dataList[dstOffset].u;
+            dataList[dstOffset].u = dataList[dstOffset].v;
+            dataList[dstOffset].v = temp;
+
+            temp = dataList[dstOffset+1].x;
+            dataList[dstOffset+1].x = dataList[dstOffset+1].y;
+            dataList[dstOffset+1].y = temp;
+
+            temp = dataList[dstOffset+1].u;
+            dataList[dstOffset+1].u = dataList[dstOffset+1].v;
+            dataList[dstOffset+1].v = temp;
+
+            temp = dataList[dstOffset+2].x;
+            dataList[dstOffset+2].x = dataList[dstOffset+2].y;
+            dataList[dstOffset+2].y = temp;
+
+            temp = dataList[dstOffset+2].u;
+            dataList[dstOffset+2].u = dataList[dstOffset+2].v;
+            dataList[dstOffset+2].v = temp;
+
+
+            temp = dataList[dstOffset+3].x;
+            dataList[dstOffset+3].x = dataList[dstOffset+3].y;
+            dataList[dstOffset+3].y = temp;
+
+            temp = dataList[dstOffset+3].u;
+            dataList[dstOffset+3].u = dataList[dstOffset+3].v;
+            dataList[dstOffset+3].v = temp;
+        }
         renderData.vertDirty = true;
     },
 
@@ -378,13 +755,14 @@ export const rotateAssembler: IAssembler = {
     },
 
 
-     _getCtrlPosByAngle(width:number): {startPos: Vec2, endPos: Vec2, ctrlPos1: Vec2, ctrlPos2: Vec2}
+    _getCtrlPosByAngle(width:number): {startPos: Vec2, endPos: Vec2, ctrlPos1: Vec2, ctrlPos2: Vec2}
     {
         let startPos = new Vec2(0, 0)
         let endPos = null
         let ctrlPos1 = null
         let ctrlPos2 = null;
-        this.angle = 0;
+
+        console.log(this.angle, "=========this.anglethis.anglethis.angle");
         let rad = this.angle * Math.PI / 180
         let per = rad * 2 / Math.PI
         if(this.angle <= 90) {

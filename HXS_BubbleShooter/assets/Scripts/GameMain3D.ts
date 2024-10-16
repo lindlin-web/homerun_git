@@ -134,7 +134,7 @@ export class GameMain3D extends Component {
         this.perPoint = this.totalProgress / this.totalPoint;               //
         this.scheduleOnce(()=>{
             this.showFinalPage();
-        },150);
+        },30);
         Debug.initial(DebugMode.VERBOSE);
         Debug.log("hello world");
         NotifyMgrCls.getInstance().observe(AppNotify.INSERTBUBBLEDONE, this.onInsertBubbleDone.bind(this));
@@ -675,6 +675,7 @@ export class GameMain3D extends Component {
     start() {
         systemEvent.on(SystemEventType.TOUCH_START, (touch:Touch) => {
             AudioMgr.Instance.PlayBgm();
+            TailPage.Instance.clickDown();
             if(!this.canShoot) {
                 return;
             }

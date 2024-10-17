@@ -2,38 +2,38 @@ import { AppNotify, NotifyMgrCls } from "../Controller/AppNotify";
 import { IModel } from "./IModel";
 const TheMapReflect:object = {
     _1:{
-        url:"images/dance/texture",key:1,scale:0.65
+        url:"images/dance/texture",key:1,scale:0.55
     }, 
     _2:{
-        url:"images/man/texture",key:1,scale:0.5
+        url:"images/man/texture",key:1,scale:0.40
     },
     _3:{
         url:"images/picture1/texture",key:1,scale:0.75
     },
     _5:{
-        url:"images/singer/texture",key:1,scale:0.75
+        url:"images/singer/texture",key:1,scale:0.55
     },
     _6:{
         url:"images/picture2/texture",key:1,scale:0.75
     },
 
     _7:{
-        url:"images/sticker_274_gramp/texture",key:1,scale:0.75
+        url:"images/sticker_274_gramp/texture",key:1,scale:0.50
     },
 
     _9:{
-        url:"images/desk/texture",key:1,scale:0.75
+        url:"images/desk/texture",key:1,scale:0.65
     },
 
     _10:{
-        url:"images/sofa_long/texture",key:1,scale:0.75
+        url:"images/sofa_long/texture",key:1,scale:0.3
     },
 
     _11:{
         url:"images/hi90/texture",key:1,scale:0.75
     },
     _12:{
-        url:"images/table/texture",key:1,scale:0.75
+        url:"images/table/texture",key:1,scale:0.3
     },
 
     _13:{

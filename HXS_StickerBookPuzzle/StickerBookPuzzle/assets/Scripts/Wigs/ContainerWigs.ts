@@ -2,7 +2,7 @@ import { _decorator, Component, dragonBones, instantiate, Node, Prefab, tween, U
 import { DragNode } from './DragNode';
 const { ccclass, property } = _decorator;
 
-export const POSITIONS:Vec3[] = [v3(-120,-80,0), v3(0,-80,0),v3(120,-80,0),v3(240, -80,0)];
+export const POSITIONS:Vec3[] = [v3(-120,-70,0), v3(0,-70,0),v3(120,-70,0),v3(240, -70,0)];
 
 const TempPosition:Vec3 = v3(240, -80,0);
 

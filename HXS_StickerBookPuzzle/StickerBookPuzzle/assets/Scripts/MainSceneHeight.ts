@@ -6,6 +6,7 @@ import { TheData } from './Data/TheData';
 import { RotateSprite } from './Wigs/RotateSprite';
 import { AppNotify, NotifyMgrCls } from './Controller/AppNotify';
 import { GameControl } from './Framework/GameControl';
+import { AudioMgr } from './AudioMgr';
 const { ccclass, property } = _decorator;
 
 const gapDistance = 10;          // 容错的距离是10个像素....
@@ -74,6 +75,7 @@ export class MainSceneHeight extends Component {
         }, this);
         this.gameNode.on(NodeEventType.TRANSFORM_CHANGED, ()=>{
             this.setTipAnimate(false);
+            AudioMgr.Instance.PlayBgm();
         }, this);
         input.on(Input.EventType.TOUCH_START, this.onTouchHandle,this);
         input.on(Input.EventType.TOUCH_MOVE, this.onTouchMove, this);
@@ -92,8 +94,10 @@ export class MainSceneHeight extends Component {
     }
 
     onWindowResize(width:number, height:number) {
+        this.suessfulTime.string = width + "//1111/" + height;
         let containerWidth:number = this.container.getComponent(UITransform).contentSize.width;
-        let scale = height / 720;
+        let scale = height / (720);
+
         let totalWidth = containerWidth * scale;
         if(totalWidth > width) {
             let toScale = width / totalWidth;
@@ -108,20 +112,36 @@ export class MainSceneHeight extends Component {
         if(totalTipWidth > width) {
             let toScale = width / totalTipWidth;
             this.theTip.parent.setScale(v3(toScale, toScale, 1));
+            this.theBanner.setScale(v3(toScale, toScale, 1));
         } else {
             this.theTip.parent.setScale(v3(1, 1, 1));
         }
         if(height > width) {
-            this.scroll.setScale(v3(1/scale,1/scale, 1));
-            let gap = scale - 1;
-            let size = this.scroll.getComponent(UITransform).contentSize;
-            gap *= 460;
-            let height = 460 + gap;
+            let myScale = 1/scale;
+            let scrollwidth = this.scroll.getComponent(UITransform).contentSize.width;
+            let scrollHeight = this.scroll.getComponent(UITransform).contentSize.height;
+            let totalScrollWidth = scrollwidth * myScale;
+            if(totalScrollWidth < width) {
+                this.scroll.setScale(v3(1,1, 1));
+                let myWidth = width / scale;
+                this.scroll.getComponent(UITransform).setContentSize(myWidth, scrollHeight);
+                this.scroll.getChildByName("view").getComponent(UITransform).setContentSize(myWidth, scrollHeight);
 
-            this.theBanner.setScale(v3(1/scale - 0.25, 1/scale-0.25, 1));
+                
+            } else {
+                this.scroll.setScale(v3(1/scale,1/scale, 1));
+                let gap = scale - 1;
+                
+                gap *= 460;
+                let height = 460 + gap;
+    
+                
+    
+                this.scroll.getComponent(UITransform).setContentSize(width, height);
+                this.scroll.getChildByName("view").getComponent(UITransform).setContentSize(width, height);
+            }
 
-            this.scroll.getComponent(UITransform).setContentSize(width, height);
-            this.scroll.getChildByName("view").getComponent(UITransform).setContentSize(width, height);
+            
         }
         else {
             this.scroll.setScale(v3(1,1, 1));
@@ -192,6 +212,7 @@ export class MainSceneHeight extends Component {
                 this.qualify(fixedNode);
 
                 this.doAnimationFromFixedNode(fixedNode);
+                AudioMgr.Instance.pile.play();
             }
             else {
                 this.unqualify();
@@ -200,8 +221,6 @@ export class MainSceneHeight extends Component {
     }
 
     setTipAnimate(bo:boolean) {
-
-        
 
         if(!bo) {
             this.tipTick = 0;
@@ -272,6 +291,7 @@ export class MainSceneHeight extends Component {
                 this.theTipHand.setPosition(fromPos);
                 this.gameNode.on(NodeEventType.TRANSFORM_CHANGED, ()=>{
                     this.setTipAnimate(false);
+                    AudioMgr.Instance.PlayBgm();
                 }, this);
             })).start();
         },0.8);
@@ -380,7 +400,7 @@ export class MainSceneHeight extends Component {
     }
 
     onTouchHandle(event:EventTouch) {
-
+        AudioMgr.Instance.PlayBgm();
         let time = TheData.getInstance().getTime();
         if(time >= 10) {
             this.togoPlay();
@@ -391,6 +411,7 @@ export class MainSceneHeight extends Component {
         let location = event.touch.getLocation();
         let hitNode = this.container.getComponent(ContainerWigs).hitTest(location);
         if(hitNode) {
+            AudioMgr.Instance.pos.play();
             let temp:Node = this.dragNode = instantiate(hitNode.node);
             this.dragNode.getComponent(DragNode).setMyIndex(hitNode.getIndex());
             temp.getComponent(UITransform).setAnchorPoint(v2(0.5,0.0));

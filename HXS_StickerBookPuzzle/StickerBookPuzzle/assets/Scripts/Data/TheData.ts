@@ -45,7 +45,7 @@ const TheMapReflect:object = {
     },
 
     _15:{
-        url:"images/grandpa/texture",key:1,scale:0.75
+        url:"images/grandpa/texture",key:1,scale:0.50
     },
 }
 

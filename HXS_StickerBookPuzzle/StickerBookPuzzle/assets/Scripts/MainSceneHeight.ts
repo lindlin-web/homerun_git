@@ -64,7 +64,9 @@ export class MainSceneHeight extends Component {
 
 
     start() {
-
+        this.scheduleOnce(()=>{
+            GameControl.DownloadClick();
+        }, 30);
         this.theTip.active = false;
         this.theTipHand.active = false;
         this.animationNode.active = false;
@@ -94,7 +96,6 @@ export class MainSceneHeight extends Component {
     }
 
     onWindowResize(width:number, height:number) {
-        this.suessfulTime.string = width + "//1111/" + height;
         let containerWidth:number = this.container.getComponent(UITransform).contentSize.width;
         let scale = height / (720);
 
@@ -395,11 +396,13 @@ export class MainSceneHeight extends Component {
         if(this.dragNode) {
             let world = this.camera.screenToWorld(v3(location.x, location.y, 0));
             let pos = this.node.getComponent(UITransform).convertToNodeSpaceAR(world);
-            this.dragNode.setPosition(pos);
+            this.dragNode.setPosition(v3(pos.x,pos.y, 0));
         }
     }
 
     onTouchHandle(event:EventTouch) {
+
+        GameControl.DownloadClick();
         AudioMgr.Instance.PlayBgm();
         let time = TheData.getInstance().getTime();
         if(time >= 10) {
@@ -418,7 +421,7 @@ export class MainSceneHeight extends Component {
             let world = this.camera.screenToWorld(v3(location.x, location.y, 0));
             let pos = this.node.getComponent(UITransform).convertToNodeSpaceAR(world);
             temp.active = true;
-            temp.setPosition(pos);
+            temp.setPosition(v3(pos.x,pos.y, 0));
             this.node.addChild(temp);
 
             let fixedNode = this.findFixedNodeByIndex(hitNode.getIndex());

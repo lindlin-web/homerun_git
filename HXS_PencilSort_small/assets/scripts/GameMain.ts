@@ -51,7 +51,7 @@ export class GameMain extends Component {
     private theCurrentPushNode:Node = null;             // 当前推动的那个pushNode... 
 
 
-    private initPositions = [new Vec3(-5,-100,11),new Vec3(-1.6,0,11),new Vec3(1.5,-100,11)];
+    private initPositions = [new Vec3(-4.2,0,8.2),new Vec3(-1.6,0,8.2),new Vec3(1.2,0,8.2)];
 
     //export enum ChipColor {BLUE,GREEN,RED, YELLOW};
 
@@ -88,7 +88,7 @@ export class GameMain extends Component {
 
     private initPushNodePosition:Vec3 = new Vec3(-1.8,0,11);                     // 发牌的初始化位置.......
 
-    private pushChipsPosition:Vec3[] = [new Vec3(6,-100,12),new Vec3(9.2,0,12),new Vec3(12.4,-100,12)];                         // 重新发牌的位置.........
+    private pushChipsPosition:Vec3[] = [new Vec3(6,0,7),new Vec3(9.2,0,7),new Vec3(12.4,-100,7)];                         // 重新发牌的位置.........
 
     private timeIsUp:boolean = false;           // 时间还没到.
 
@@ -143,8 +143,8 @@ export class GameMain extends Component {
         }
     }
     start() {
-        this.pushNode.active = false;
-        this.pushNode3.active = false;
+        this.pushNode.active = true;
+        this.pushNode3.active = true;
         this.pushNodes = [this.pushNode, this.pushNode2, this.pushNode3];
 
         this.scheduleOnce(this.onFinished.bind(this), 91);
@@ -343,7 +343,7 @@ export class GameMain extends Component {
                 this.pushNodes[i].getChildByName("dog").addChild(prefab);
             }
             let pushNode = this.pushNodes[i];
-            let temp:Vec3 = this.initPositions[1];
+            let temp:Vec3 = this.initPositions[i];
             temp = new Vec3(temp.x, temp.y, temp.z);
             pushNode.setPosition(temp);
             if(pushNode.active == true) {
@@ -417,9 +417,12 @@ export class GameMain extends Component {
     /** ======================确认是否已经满了====================== */
     public checkIsFull() {
         let isFull = true;
+        let totalNum = 0;
+        let emptyNum = 0;
         for(let i = 0; i < this.rowNum; i++) {
             let rowNodes = this.baseCodeNode[i];
             for(let j = 0; j < this.columnNum; j++) {
+                totalNum++;
                 let rowColumn = rowNodes[j];
                 if(rowColumn.active) {
                     let group = this.manager.getGroup(i, j);
@@ -428,12 +431,16 @@ export class GameMain extends Component {
                         isFull = false;
                     }
                     if(group.isEmpty()) {
+                        emptyNum ++;
                         isFull = false;
                     }
                 }
             }
         }
+        console.log(totalNum, "=========totalNum");
+        console.log(emptyNum, "=========emptyNum");
         console.log(isFull);
+        TailPage.Instance.plusAdd2(emptyNum, totalNum);
         return isFull;
     }
 

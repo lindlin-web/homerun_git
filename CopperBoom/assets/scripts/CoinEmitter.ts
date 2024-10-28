@@ -21,6 +21,7 @@ export class CoinEmitter extends Component {
         for(let i = 0; i < this.amount; i++) {
             let coin:Node = instantiate(this.coinPrefab);
             this.particles.push(coin);
+            coin.active = false;
             this.node.addChild(coin);
         }
     }
@@ -56,6 +57,7 @@ export class CoinEmitter extends Component {
         let comp:CoinThing = particle.getComponent(CoinThing);
         comp.InitPosition = v3(0,0,0);
         comp.Life = 3.0;
+        particle.active = true;    
         comp.InitVector = v2(randomx, randomy);
         comp.RotateSpeed= randomRotate;
         comp.CurrentLife = 0;
@@ -74,6 +76,9 @@ export class CoinEmitter extends Component {
             let comp = p.getComponent(CoinThing);
             if(comp.Life > 0.0) {
                 comp.onUpdate(deltaTime);
+            }
+            else {
+                comp.node.active = false;
             }
         }
     }

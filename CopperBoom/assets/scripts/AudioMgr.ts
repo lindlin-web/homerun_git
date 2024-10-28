@@ -23,6 +23,25 @@ export class AudioMgr extends Component {
    @property(MyAudioCpt)
    gold_explode : MyAudioCpt;
 
+   @property(MyAudioCpt)
+   gold_explode_big:MyAudioCpt;
+
+   @property(MyAudioCpt)
+   box_open : MyAudioCpt;
+
+   @property(MyAudioCpt)
+   fire : MyAudioCpt;
+
+   @property(MyAudioCpt)
+   terror_smile : MyAudioCpt;
+
+   @property(MyAudioCpt)
+   energy : MyAudioCpt;
+
+   @property(MyAudioCpt)
+   meow : MyAudioCpt;
+
+
    bPlayBgm = false;
 
    start() {

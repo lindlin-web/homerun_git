@@ -1,4 +1,4 @@
-import { _decorator, CCFloat, Component, Label, Node } from 'cc';
+import { _decorator, CCFloat, Component, Label, Node,Animation, Vec3, v3 } from 'cc';
 import { AudioMgr } from '../AudioMgr';
 const { ccclass, property } = _decorator;
 
@@ -19,6 +19,8 @@ export class SpecialLabel extends Component {
 
     @property(Label)
     currentLabel:Label;
+
+    private initLabelPos:Vec3 = v3(-353.706,605.331,0);
     onLoad(): void {
         
     }
@@ -30,7 +32,12 @@ export class SpecialLabel extends Component {
 
         this.isUpdating = true;
 
-        AudioMgr.Instance.gold_explode.play();
+        this.node.parent.getComponent(Animation).play();
+        this.scheduleOnce(()=>{
+            this.node.parent.getComponent(Animation).stop();
+            this.node.parent.setPosition(this.initLabelPos);
+            this.node.parent.setScale(v3(1,1,1));
+        }, 1);
     }
 
     public get Speed() {

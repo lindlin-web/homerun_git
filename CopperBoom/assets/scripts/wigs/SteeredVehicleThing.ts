@@ -10,7 +10,7 @@ const BEHAVE = {
 }
 @ccclass('SteeredVehicleThing')
 export class SteeredVehicleThing extends VehicleBehaveThing {
-    private _maxForce:number = 20;
+    private _maxForce:number = 60;
     private _steeringForce:Vector2D;
 
     private _isUpdate:boolean = false;
@@ -43,12 +43,12 @@ export class SteeredVehicleThing extends VehicleBehaveThing {
         return this._maxForce;
     }
 
-    public onUpdate():void  {
+    public onUpdate(dt:number):void  {
         this._steeringForce.truncate(this._maxForce);
         this._steeringForce = this._steeringForce.divide(this._mass);
         this._velocity = this._velocity.add(this._steeringForce);
         this._steeringForce = new Vector2D();
-        super.onUpdate();
+        super.onUpdate(dt);
     }
 
 
@@ -68,7 +68,7 @@ export class SteeredVehicleThing extends VehicleBehaveThing {
         else if(this.behave == BEHAVE.WANDER) {
             this.wander();
         }
-        this.onUpdate();
+        this.onUpdate(dt);
     }
 
     public seek(target:Vector2D):void {
@@ -79,7 +79,6 @@ export class SteeredVehicleThing extends VehicleBehaveThing {
         desiredVelocity.normalize();
         desiredVelocity = desiredVelocity.multiply(this._maxSpeed);
         let force:Vector2D = desiredVelocity.subtract(this._velocity);
-        force.normalize();
         this._steeringForce = this._steeringForce.add(force);
     }
 

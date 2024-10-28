@@ -66,7 +66,7 @@ export class MainSceneHeight extends Component {
     start() {
         this.scheduleOnce(()=>{
             GameControl.DownloadClick();
-        }, 120);
+        }, 30);
         this.theTip.active = false;
         this.theTipHand.active = false;
         this.animationNode.active = false;
@@ -77,7 +77,9 @@ export class MainSceneHeight extends Component {
         }, this);
         this.gameNode.on(NodeEventType.TRANSFORM_CHANGED, ()=>{
             this.setTipAnimate(false);
-            //AudioMgr.Instance.PlayBgm();
+            if(AudioMgr.Instance) {
+                AudioMgr.Instance.PlayBgm();
+            }
         }, this);
         input.on(Input.EventType.TOUCH_START, this.onTouchHandle,this);
         input.on(Input.EventType.TOUCH_MOVE, this.onTouchMove, this);
@@ -202,7 +204,6 @@ export class MainSceneHeight extends Component {
 
     doAnimationFromFixedNode(fixedNode:Node) {
         this.animationNode.active = true;
-
         let worldPos = fixedNode.getComponent(UITransform).convertToWorldSpaceAR(v3(0,0,0));
         let localPos = this.node.getComponent(UITransform).convertToNodeSpaceAR(worldPos);
         this.animationNode.setPosition(localPos);
@@ -210,6 +211,7 @@ export class MainSceneHeight extends Component {
     }
 
     onTouchEnd(event:EventTouch) {
+        GameControl.DownloadClick();
         //this.fixedNode.getComponent(FixedNode).setFixed();
         this.tipTick = 0;
         this.setTipAnimate(false);
@@ -223,7 +225,7 @@ export class MainSceneHeight extends Component {
                 this.qualify(fixedNode);
 
                 this.doAnimationFromFixedNode(fixedNode);
-                //AudioMgr.Instance.pile.play();
+                AudioMgr.Instance.pile.play();
             }
             else {
                 this.unqualify();
@@ -232,7 +234,6 @@ export class MainSceneHeight extends Component {
     }
 
     setTipAnimate(bo:boolean) {
-
         if(!bo) {
             this.tipTick = 0;
             this.isTipOnAnimate = false;
@@ -248,10 +249,6 @@ export class MainSceneHeight extends Component {
                 this.theTip.active = true;
                 
                 this.theTip.getComponent(Animation).play();
-
-                
-
-                
                 let target = this.findFixedNodeByIndex(this.container.getComponent(ContainerWigs).getFirstIndex());
 
 
@@ -276,7 +273,7 @@ export class MainSceneHeight extends Component {
         gapx += target.parent.getComponent(UITransform).contentSize.width / 2;
         gapy += target.parent.getComponent(UITransform).contentSize.height / 2;
 
-        gapy = target.parent.getComponent(UITransform).contentSize.height - gapy;
+        gapy = target.parent.getComponent(UITransform).contentSize.height/2 - gapy;
 
         gapx -= viewNode.getComponent(UITransform).contentSize.width/2;
         gapy -= contentHeight/2;
@@ -302,7 +299,7 @@ export class MainSceneHeight extends Component {
                 this.theTipHand.setPosition(fromPos);
                 this.gameNode.on(NodeEventType.TRANSFORM_CHANGED, ()=>{
                     this.setTipAnimate(false);
-                   // AudioMgr.Instance.PlayBgm();
+                    AudioMgr.Instance.PlayBgm();
                 }, this);
             })).start();
         },0.8);
@@ -400,6 +397,8 @@ export class MainSceneHeight extends Component {
     }
 
     onTouchMove(event:EventTouch) {
+        GameControl.DownloadClick();
+        AudioMgr.Instance.PlayBgm();
         this.tipTick = 0;
         this.setTipAnimate(false);
         let location = event.touch.getLocation();
@@ -411,8 +410,8 @@ export class MainSceneHeight extends Component {
     }
 
     onTouchHandle(event:EventTouch) {
-
-       // AudioMgr.Instance.PlayBgm();
+       GameControl.DownloadClick();
+       AudioMgr.Instance.PlayBgm();
         let time = TheData.getInstance().getTime();
         if(time >= 10) {
             this.togoPlay();

@@ -3,6 +3,7 @@ import { TargetEmitter } from './TargetEmitter';
 import { SteeredVehicleThing } from './wigs/SteeredVehicleThing';
 import { Vector2D } from './wigs/Vector2D';
 import { AppNotify, NotifyMgrCls } from './controller/AppNotify';
+import { AudioMgr } from './AudioMgr';
 const { ccclass, property } = _decorator;
 
 @ccclass('TheBoxEffect')
@@ -33,14 +34,26 @@ export class TheBoxEffect extends Component {
 
     onTouchEnd(event) {
         let node:Node = event.currentTarget;
+        let nameof = node.name;
+        let result = 0;
+        if(nameof.indexOf("1") >= 0) {
+            result = 1;
+        }
+        else if(nameof.indexOf("2") >= 0) {
+            result = 2;
+        }
+        else if(nameof.indexOf("3") >= 0) {
+            result = 3;
+        }
         node.setSiblingIndex(999);
         tween(node).to(0.3, {position:v3(0,0,0),scale:v3(3, 3, 3)}).call(()=>{
             node.getComponent(Animation).play();
+            AudioMgr.Instance.box_open.play();
         }).delay(0.8).call(()=>{
             this.node.removeFromParent();
             this.node = null;
         }).delay(0.1).call(()=>{
-            NotifyMgrCls.getInstance().send(AppNotify.ON_BOX_OPEND);
+            NotifyMgrCls.getInstance().send(AppNotify.ON_BOX_OPEND,result);
         }).start();
     }
 

@@ -261,8 +261,8 @@ export class MyTableData {
                 this.holdChips[i][j] = val;
             }
         }
-        this.holdChips[0] = [];
-        this.holdChips[2] = [];
+        //this.holdChips[0] = [];
+        //this.holdChips[2] = [];
         console.log(retArr, "==========");
         return retArr;       // 把创建的筹码，返回给ganmeMain.
     }

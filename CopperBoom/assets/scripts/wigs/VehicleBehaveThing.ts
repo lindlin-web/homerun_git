@@ -6,7 +6,7 @@ const { ccclass, property } = _decorator;
 export class VehicleBehaveThing extends Component {
     
     protected _mass:number = 1.0;
-    protected _maxSpeed:number = 35;
+    protected _maxSpeed:number = 4050;
     protected _position:Vector2D;
     protected _velocity:Vector2D;
 
@@ -51,10 +51,10 @@ export class VehicleBehaveThing extends Component {
         return this._velocity;
     }
 
-    public onUpdate():void {
+    public onUpdate(dt:number):void {
         this._velocity.truncate(this._maxSpeed);
-        this._velocity = this._velocity.multiply(0.95);
-        this._position = this._position.add(this._velocity);
+        this._velocity = this._velocity.multiply(0.99);
+        this._position = this._position.add(this._velocity.multiply(dt));
         this.node.setPosition(v3(this._position.x,this._position.y, 0));
     }
 }

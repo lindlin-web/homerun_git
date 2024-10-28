@@ -1,4 +1,4 @@
-import { _decorator, Component, math, Node, UITransform, Vec3 } from 'cc';
+import { _decorator, Component, math, Node, UITransform, Vec3,v3 } from 'cc';
 import { GameControl } from './Framework/GameControl';
 const { ccclass, property } = _decorator;
 
@@ -15,7 +15,11 @@ export class TailPage extends Component {
     @property({type:Node})
     pp:Node = null;
 
+    @property({type:Node})
+    pointer:Node = null;
+
     private ppPos:Vec3 = null;
+    
     start() {
         TailPage.Instance = this;
         this.node.active = false;
@@ -24,6 +28,14 @@ export class TailPage extends Component {
     }
     onShowPage() {
         this.node.active = true;
+    }
+
+    public plusAdd2(emptyNum:number, totalNum:number) {
+        emptyNum = emptyNum - 5;
+        emptyNum = Math.max(emptyNum, 0);
+        let angle = -180 - emptyNum / totalNum    * 300;
+        angle = Math.max(-360,angle);
+        this.pointer.setRotationFromEuler(v3(0, 0, angle));
     }
 
     public plusAdd() {

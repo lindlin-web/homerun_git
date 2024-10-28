@@ -32,6 +32,18 @@ const ITEMSNAME = {
 };
 
 
+const ITEMSSCALE = {
+    "_1":0.9,
+    "_2":0.9,
+    "_3":1.3,
+    "_4": 0.9,
+    "_5":0.9,
+    "_6":1.5,
+    "_7":1.2,
+    "_8":1.0,
+    "_9":0.9,
+};
+
 const ITEMSARRAY = [1, 2, 3,4,5,6,7];
 const TOTALITEM = 7;
 @ccclass('DogMachine')
@@ -88,6 +100,9 @@ export class DogMachine extends Component {
     private dataThing:MyData = new MyData();
 
     @property(Node)
+    theDecorateNode:Node;               // 就是用来装饰的东西...
+
+    @property(Node)
     finalPage:Node = null;
 
     @property(Label)
@@ -123,8 +138,9 @@ export class DogMachine extends Component {
 
     private fireTime:number = 0;
 
+
     @property(Node)
-    fireNode:Node ;
+    fireNode:Node;
 
 
     onLoad() {
@@ -148,8 +164,10 @@ export class DogMachine extends Component {
 
     onFireFinished() {
         //this.coinEmitter2.setInitDataAndTotal(6, 20);
+        this.doTheDecorate(false);
         this.coinEmitter2.setInitData(40);
-        this.mySpecialLabel.earn(400 * 1000);
+        this.mySpecialLabel.earn(40 * 1000);
+        AudioMgr.Instance.gold_explode_big.play();
         this.fireTime ++;
         if(this.fireTime >= 3) {
             this.fireNode.active = false;
@@ -158,10 +176,23 @@ export class DogMachine extends Component {
     }
     
 
-    onBoxOpened() {
+    onBoxOpened(index:number) {
+
+        
         this.coinEmitter2.setInitDataAndTotal(6, 400);
 
-        this.mySpecialLabel.earn(400 * 1000);
+        this.doTheDecorate();
+        if(index == 1) {
+            this.mySpecialLabel.earn(100 * 1000);
+            AudioMgr.Instance.gold_explode_big.play();
+        }
+        else if(index == 2) {
+            this.mySpecialLabel.earn(80 * 1000);
+            AudioMgr.Instance.gold_explode_big.play();
+        }
+        else if(index == 3) {
+            this.mySpecialLabel.earn(50 * 1000);
+        }
     }
 
     onWindowResize(width:number, height:number) {
@@ -179,7 +210,7 @@ export class DogMachine extends Component {
             this.downLoad.setScale(v3(1.6,1.6,1));
             this.coin.setPosition(v3(-453.706,605.331,0));
             this.downLoad.setPosition(v3(453.706,605.331,0));
-            this.shieldThing.setPosition(v3(-433.706,517.439,0));
+            this.shieldThing.setPosition(v3(-333.706,517.439,0));
         }
         else {
             this.node.setScale(v3(1.0,1.0,1.0));
@@ -195,7 +226,7 @@ export class DogMachine extends Component {
             this.coin.setScale(v3(1,1,1));
             this.downLoad.setScale(v3(1,1,1));
             this.coin.setPosition(v3(-333.706,605.331,0));
-            this.shieldThing.setPosition(v3(-323.706,517.439,0));
+            this.shieldThing.setPosition(v3(-223.706,517.439,0));
         }
     }
 
@@ -257,29 +288,63 @@ export class DogMachine extends Component {
             totalSpawn += PERCOIN +PERCOIN;
         }
 
+        for(let i = 0; i < this.contentNodes.length; i++) {
+            let content = this.contentNodes[i];
+            let value = this.result[i];
+            if(value == ITEMS.COIN || value == ITEMS.BAGCOIN) {
+                let rollContent = content.getComponent(RollContent);
+                let node = rollContent.findNodeByIndex(value);
+                node.getChildByName("theFireFlow").active = true;
+                let nameOfNode = node.name;
+                node.getChildByName(nameOfNode).getComponent(Animation).play();
+            }
+            
+        }
+
         /** 如果三个icon 都是一样的，那么就会有别的效果... */
         if(this.result[0] == this.result[1]  && this.result[1] == this.result[2]) {                  //this.result[0] == this.result[1]  && this.result[1] = this.result[2]
+
+
+            for(let i = 0; i < this.contentNodes.length; i++) {
+                let content = this.contentNodes[i];
+                let rollContent = content.getComponent(RollContent);
+                let node = rollContent.findNodeByIndex(this.result[0]);
+                node.getChildByName("theFireFlow").active = true;
+                let nameOfNode = node.name;
+                node.getChildByName(nameOfNode).getComponent(Animation).play();
+            }
+
             if(this.result[0] == ITEMS.ENERGY) {                  //this.result[0] == ITEMS.ENERGY
                 // test 
-                this.targetEmitter.doTheMoving(3,30,1,0.3,this.energyProgressNode,20);
+                this.targetEmitter.doTheMoving(3,30,1,0.3,this.energyProgressNode,600);
+
+                this.scheduleOnce(()=>{
+                    AudioMgr.Instance.energy.play();
+                },0.8);
                 this.scheduleOnce(()=>{
                     this.dataThing.Energy += 30;
                 },1);
             }
             else if(this.result[0] == ITEMS.COIN) {
                 // test 
-                this.targetEmitter.doTheMoving(1,100,1,1,this.coin.getChildByName("Label"),50);
+                this.targetEmitter.doTheMoving(1,100,1,1,this.coin.getChildByName("Label"),300);
                 this.mySpecialLabel.earn(100 * 1000);
+                AudioMgr.Instance.gold_explode_big.play();
+
+                this.doTheDecorate();
             }
             else if(this.result[0] == ITEMS.BAGCOIN) {
                 // test 
-                this.targetEmitter.doTheMoving(1,300,1,1,this.coin.getChildByName("Label"),50);
+                this.targetEmitter.doTheMoving(1,300,1,1,this.coin.getChildByName("Label"),300);
                 this.mySpecialLabel.earn(300 * 1000);
+                AudioMgr.Instance.gold_explode_big.play();
+
+                this.doTheDecorate();
             }
             else if(this.result[0] == ITEMS.SHIELD) {
                 
                 // test 
-                this.targetEmitter.doTheMoving(2,10,1,0.3,this.shieldThing,20);
+                this.targetEmitter.doTheMoving(2,10,1,0.3,this.shieldThing,400);
             }
             else if(this.result[0] == ITEMS.BOX) {
                 let treature = instantiate(this.TreasureBox);
@@ -289,20 +354,45 @@ export class DogMachine extends Component {
                 let dog = instantiate(this.CatPrefab);
                 dog.setPosition(v3(0, -30,0));
                 this.node.addChild(dog);
-
+                AudioMgr.Instance.meow.play();
                 this.scheduleOnce(()=>{
-                    this.mySpecialLabel.earn(6000 * 1000);
+                    this.mySpecialLabel.earn(600 * 1000);
+                    AudioMgr.Instance.gold_explode_big.play();
+                    this.doTheDecorate();
                 },1);
             }
             else if(this.result[0] == ITEMS.CANON) {
                 this.fireNode.active = true;
                 this.fireNode.getComponent(Animation).play();
+
             }
         } else {
             this.coinEmitter2.setInitData(totalSpawn);
 
             this.mySpecialLabel.earn(totalSpawn * 1000);
+
+            if(totalSpawn < 80)
+            {
+                AudioMgr.Instance.gold_explode.play();
+            }
+            else {
+                AudioMgr.Instance.gold_explode_big.play();
+            }
         }
+    }
+
+    doTheDecorate(playSmile=true) {
+
+        if(playSmile !== false) {
+            AudioMgr.Instance.terror_smile.play();
+        }
+        tween(this.theDecorateNode).repeat(7,tween(this.theDecorateNode).call(()=>{
+            this.theDecorateNode.active = true;
+        }).delay(0.15).call(()=>{
+            this.theDecorateNode.active = false;
+        }).delay(0.15)).call(()=>{
+            this.theDecorateNode.active = false;
+        }).start();
     }
 
     /** 开始做震动的动作 */
@@ -352,6 +442,21 @@ export class DogMachine extends Component {
             return;
         }
 
+        if(this.result && this.result.length == 3) {
+            for(let i = 0; i < this.contentNodes.length; i++) {
+                let content = this.contentNodes[i];
+                let node = content.getComponent(RollContent).findNodeByIndex(this.result[i]);
+                node.getChildByName("theFireFlow").active = false;
+                let nameOfNode = node.name;
+                let aniComp = node.getChildByName(nameOfNode).getComponent(Animation);
+                if(aniComp) {
+                    node.getChildByName(nameOfNode).getComponent(Animation).stop();
+                }
+                let scaleValue = ITEMSSCALE["_"+this.result[i]];
+                node.getChildByName(nameOfNode).setScale(v3(scaleValue, scaleValue, scaleValue));
+            }
+        }
+        
         this.energyProgressNode.getComponent(ProgressBar).progress = this.dataThing.Energy / 50;
         this.isRolling = true;
         this.result = this.createTheValue();
@@ -385,8 +490,9 @@ export class DogMachine extends Component {
 
         if(Math.random() > 0.64 && spinTime % 5 != 0) {
             let theValue = Math.random();
-            if(theValue > 0.88) {
-                retValues = [ITEMS.DOG, ITEMS.DOG,ITEMS.DOG];
+
+            if(theValue > 0.7) {
+                retValues = [ITEMS.ENERGY, ITEMS.ENERGY,ITEMS.ENERGY];
             }
             else if(theValue > 0.6) {
                 retValues = [ITEMS.CANON, ITEMS.CANON,ITEMS.CANON];
@@ -395,7 +501,7 @@ export class DogMachine extends Component {
                 retValues = [ITEMS.BOX, ITEMS.BOX,ITEMS.BOX];
             }
             else if(theValue > 0.4) {
-                retValues = [ITEMS.ENERGY, ITEMS.ENERGY,ITEMS.ENERGY];
+                retValues = [ITEMS.DOG, ITEMS.DOG,ITEMS.DOG];
             }
             else if(theValue > 0.3) {
                 retValues = [ITEMS.COIN, ITEMS.COIN,ITEMS.COIN];
@@ -404,7 +510,7 @@ export class DogMachine extends Component {
                 retValues = [ITEMS.BAGCOIN, ITEMS.BAGCOIN,ITEMS.BAGCOIN];
             }
             else if(theValue > 0.1) {
-                retValues = [ITEMS.SHIELD, ITEMS.SHIELD,ITEMS.SHIELD];
+                //retValues = [ITEMS.SHIELD, ITEMS.SHIELD,ITEMS.SHIELD];
             }
         }
         return retValues;

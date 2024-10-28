@@ -4,8 +4,8 @@ const { ccclass, property } = _decorator;
 
 let lastUsedParticle:number = 0;
 
-export let PERCOIN:number = 4;
-export let PERBAG:number = 7;
+export let PERCOIN:number = 16;
+export let PERBAG:number = 30;
 
 @ccclass('CoinEmitter2')
 export class CoinEmitter2 extends Component {

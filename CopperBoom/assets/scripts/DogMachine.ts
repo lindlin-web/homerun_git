@@ -291,7 +291,7 @@ export class DogMachine extends Component {
         for(let i = 0; i < this.contentNodes.length; i++) {
             let content = this.contentNodes[i];
             let value = this.result[i];
-            if(value == ITEMS.COIN || value == ITEMS.BAGCOIN) {
+            if(value == ITEMS.COIN || value == ITEMS.BAGCOIN || value == ITEMS.BOX) {
                 let rollContent = content.getComponent(RollContent);
                 let node = rollContent.findNodeByIndex(value);
                 node.getChildByName("theFireFlow").active = true;
@@ -488,7 +488,7 @@ export class DogMachine extends Component {
 
         let spinTime = this.dataThing.SpinTime;
 
-        if(Math.random() > 0.64 && spinTime % 5 != 0) {
+        if(Math.random() > 0.50 && spinTime % 5 != 0) {
             let theValue = Math.random();
 
             if(theValue > 0.7) {

@@ -41,11 +41,15 @@ export class TheCircle extends Component {
     private bbbbbbbgap:number = 0;
 
     start() {
-        this.doRotating = true;
+        this.doRotating = false;
     }
 
     public set DoRotating(bo:boolean) {
         this.doRotating = bo;
+    }
+
+    public setDirection(num:number) {
+        this.direction = num;
     }
 
 

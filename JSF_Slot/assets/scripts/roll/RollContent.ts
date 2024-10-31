@@ -1,5 +1,6 @@
 import { _decorator, CCFloat, Component, Node, tween, UITransform, v2, v3, Vec2, Vec3 } from 'cc';
 import { AppNotify, NotifyMgrCls } from '../controller/AppNotify';
+import { AudioMgr } from '../AudioMgr';
 const { ccclass, property } = _decorator;
 
 
@@ -147,6 +148,7 @@ export class RollContent extends Component {
 
        tween(this.resultContent).to(0.2, {position:finalPos1}).to(0.1, {position:finalPos2}).call(()=>{
            this.reset();
+           AudioMgr.Instance.turnStop.play();
            NotifyMgrCls.getInstance().send(AppNotify.ANIMATIONDONE);
        }).start();
 

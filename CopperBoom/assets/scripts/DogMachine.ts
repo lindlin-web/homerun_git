@@ -488,7 +488,7 @@ export class DogMachine extends Component {
 
         let spinTime = this.dataThing.SpinTime;
 
-        if(Math.random() > 0.50 && spinTime % 5 != 0) {
+        if(Math.random() > 0.30 && spinTime % 5 != 0) {
             let theValue = Math.random();
 
             if(theValue > 0.7) {

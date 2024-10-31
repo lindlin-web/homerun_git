@@ -1,5 +1,6 @@
 import { _decorator, Component, Node, Quat, quat, tween } from 'cc';
 import { AppNotify, NotifyMgrCls } from './controller/AppNotify';
+import { AudioMgr } from './AudioMgr';
 const { ccclass, property } = _decorator;
 
 
@@ -39,6 +40,9 @@ export class TheCircle extends Component {
     private bbbbbb:number = 0;
 
     private bbbbbbbgap:number = 0;
+
+    @property(Node)
+    theSpecial:Node;
 
     start() {
         this.doRotating = false;
@@ -108,11 +112,14 @@ export class TheCircle extends Component {
             if(this.currentStatus == STATUS.BACK) {
                 this.currentRotate = this.bbbbbb + this.bbbbbbbgap * 2*this.currentTime;
                 if(this.currentTime > 0.5) {
+                    AudioMgr.Instance.StopCircleTurn();
                     this.currentRotate = 200;
                     this.doRotating = false;
+                    this.theSpecial.active = true;
+                    AudioMgr.Instance.circleReward.play();
                     this.scheduleOnce(()=>{
                         NotifyMgrCls.getInstance().send(AppNotify.CIRCLEDONE);
-                    },0.3);
+                    },2.1);
                 }
             }
         }
@@ -165,11 +172,13 @@ export class TheCircle extends Component {
             if(this.currentStatus == STATUS.BACK) {
                 this.currentRotate = this.bbbbbb + this.bbbbbbbgap * 2*this.currentTime;
                 if(this.currentTime > 0.5) {
+                    AudioMgr.Instance.StopCircleTurn();
                     this.currentRotate = -160;
-
+                    this.theSpecial.active = true;
+                    AudioMgr.Instance.circleReward.play();
                     this.scheduleOnce(()=>{
                         NotifyMgrCls.getInstance().send(AppNotify.CIRCLEDONE);
-                    },0.3);
+                    },2.1);
                     this.doRotating = false;
                 }
             }

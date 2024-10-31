@@ -38,7 +38,7 @@ export class MyData{
             NotifyMgrCls.getInstance().send(AppNotify.COINCHANGE);
             this.spinTime++
             if(this.spinTime % 5 == 0) {
-                NotifyMgrCls.getInstance().send(AppNotify.COIN_INSUFFICIENCE);    
+                //NotifyMgrCls.getInstance().send(AppNotify.COIN_INSUFFICIENCE);    
                 return true;
             }
             return true;

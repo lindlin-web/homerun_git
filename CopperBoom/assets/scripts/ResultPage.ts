@@ -1,6 +1,7 @@
 import { _decorator, Component, Label, Node, tween, Tween, UITransform, v3 } from 'cc';
 import { AppNotify, NotifyMgrCls } from './controller/AppNotify';
 import { AudioMgr } from './AudioMgr';
+import { GameControl } from './Framework/GameControl';
 const { ccclass, property } = _decorator;
 
 @ccclass('ResultPage')
@@ -67,6 +68,8 @@ export class ResultPage extends Component {
         this.node.parent.active =  false;
 
         AudioMgr.Instance.butn.play();
+
+        GameControl.DownloadClick();
     }
 
     onContinue() {

@@ -2,6 +2,8 @@ import { _decorator, CCFloat, Component, Node,Animation, v3, tween } from 'cc';
 import { RollContent } from './roll/RollContent';
 import { MyData } from './data/MyData';
 import { AppNotify, NotifyMgrCls } from './controller/AppNotify';
+import { SpecialLabel } from './wigs/SpecialLabel';
+import { AudioMgr } from './AudioMgr';
 const { ccclass, property } = _decorator;
 
 
@@ -55,6 +57,13 @@ export class DogMachine extends Component {
     @property([CCFloat])
     preTime:number[] = [];                  // 每个content 的提前量是多少, 就是停顿多久的时间，才开始转动
 
+
+    @property(SpecialLabel)
+    theCoin:SpecialLabel;
+
+    @property(Node)
+    theClickTip:Node;
+
     private isRolling:boolean = false;      // 是否在滚动中..
 
     private dataThing:MyData = new MyData();
@@ -78,7 +87,21 @@ export class DogMachine extends Component {
             this.finishedTime = 0;
             this.doTheEffect();
             this.scheduleOnce(()=>{
+                if(this.spinTime == 1) {
+                    this.theCoin.earn(30880)
+                }
+                else if(this.spinTime == 2) {
+                    this.theCoin.earn(50880)
+                }
+                else if(this.spinTime == 3) {
+                    this.theCoin.earn(50880)
+                    
+                }
+                
                 NotifyMgrCls.getInstance().send(AppNotify.SPINDONE, this.spinTime);
+                if(this.spinTime == 3) {
+                    this.spinTime = 0;
+                }
             }, 0.5);
         }
     }
@@ -106,6 +129,9 @@ export class DogMachine extends Component {
         if(!spin) {
             return;
         }
+
+        
+        this.theClickTip.active = false;
         this.spinTime++;
         if(this.result && this.result.length == 3) {
             for(let i = 0; i < this.contentNodes.length; i++) {
@@ -129,6 +155,7 @@ export class DogMachine extends Component {
             let rollContent = content.getComponent(RollContent);
             rollContent.setResult(this.result[i]);
             tween(content).delay(this.preTime[i]).call(()=>{
+                AudioMgr.Instance.tigerTurn.play();
                 rollContent.doingTheRollingThing();
             }).start();
         }

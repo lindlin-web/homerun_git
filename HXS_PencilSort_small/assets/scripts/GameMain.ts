@@ -147,7 +147,7 @@ export class GameMain extends Component {
         this.pushNode3.active = true;
         this.pushNodes = [this.pushNode, this.pushNode2, this.pushNode3];
 
-        this.scheduleOnce(this.onFinished.bind(this), 91);
+        this.scheduleOnce(this.onFinished.bind(this), 101);
         this.manager = new GameManager();
         this.manager.init(this);
 

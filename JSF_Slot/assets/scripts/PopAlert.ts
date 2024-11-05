@@ -1,6 +1,7 @@
 import { _decorator, Component, Node,Animation } from 'cc';
 import { GameControl } from './Framework/GameControl';
 import { AudioMgr } from './AudioMgr';
+import { GameMain } from './GameLogic/GameMain';
 const { ccclass, property } = _decorator;
 
 @ccclass('PopAlert')
@@ -52,9 +53,8 @@ export class PopAlert extends Component {
             },3);   
         }
         this.scheduleOnce(()=>{
-            
             if(num == 3) {
-                GameControl.DownloadClick();
+                GameMain.instance.clickDown();
             }
             else {
                 this.node.active =  false;

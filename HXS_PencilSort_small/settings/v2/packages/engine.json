@@ -37,13 +37,13 @@
       },
       "physics": {
         "_value": true,
-        "_option": "physics-ammo"
+        "_option": "physics-cannon"
       },
       "physics-ammo": {
-        "_value": true
+        "_value": "physics-ammo"
       },
       "physics-cannon": {
-        "_value": false
+        "_value": "physics-cannon"
       },
       "physics-physx": {
         "_value": false
@@ -137,7 +137,7 @@
       "meshopt",
       "particle",
       "particle-2d",
-      "physics-ammo",
+      "physics-cannon",
       "primitive",
       "profiler",
       "skeletal-animation",

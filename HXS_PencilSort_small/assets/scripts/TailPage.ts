@@ -1,5 +1,5 @@
 import { _decorator, Component, math, Node, UITransform, Vec3,v3 } from 'cc';
-import { GameControl } from './Framework/GameControl';
+import { GameMain } from './GameLogic/GameMain';
 const { ccclass, property } = _decorator;
 
 @ccclass('TailPage')
@@ -58,7 +58,7 @@ export class TailPage extends Component {
     }
 
     clickDown() {
-        GameControl.DownloadClick();
+        GameMain.instance.clickDown();
     }
 
     update(deltaTime: number) {

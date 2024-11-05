@@ -1,0 +1,66 @@
+{
+  "package_version": 2,
+  "version": "1.0.0",
+  "name": "playable-ext",
+  "description": "i18n:playable-ext.description",
+  "main": "./dist/main.js",
+  "dependencies": {
+    "fs-extra": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^16.0.1",
+    "@types/fs-extra": "^9.0.5",
+    "typescript": "^4.3.4"
+  },
+  "panels": {
+    "default": {
+      "title": "MiniGameExt",
+      "type": "dockable",
+      "main": "dist/panels/default/index.js",
+      "size": {
+        "min-width": 400,
+        "min-height": 300,
+        "width": 1024,
+        "height": 600
+      }
+    },
+    "WxPlayAble": {
+      "title": "WxPlayAble",
+      "type": "dockable",
+      "main": "dist/panels/default/WxAblePanel.js",
+      "size": {
+        "min-width": 400,
+        "min-height": 300,
+        "width": 1024,
+        "height": 600
+      }
+    }
+  },
+  "contributions": {
+    "menu": [
+      {
+        "path": "i18n:playable-ext.extenson_tool",
+        "label": "i18n:playable-ext.extenson_tool",
+        "message": "insertLibs"
+      }
+    ],
+    "messages": {
+      "insertLibs": {
+        "methods": [
+          "openPanel"
+        ]
+      },
+      "showWxAble": {
+        "methods": [
+          "showWxAblePanel"
+        ]
+      }
+    }
+  },
+  "author": "DDSTL",
+  "editor": ">=3.0.0",
+  "scripts": {
+    "build": "tsc -b",
+    "watch": "tsc -w"
+  }
+}

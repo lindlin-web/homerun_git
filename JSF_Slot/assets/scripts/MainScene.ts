@@ -5,6 +5,7 @@ import { PopAlert } from './PopAlert';
 import { SpecialLabel } from './wigs/SpecialLabel';
 import { AudioMgr } from './AudioMgr';
 import { GameControl } from './Framework/GameControl';
+import { GameMain } from './GameLogic/GameMain';
 const { ccclass, property } = _decorator;
 
 @ccclass('MainScene')
@@ -51,6 +52,9 @@ export class MainScene extends Component {
     }
 
     start(): void {
+        this.scheduleOnce(()=>{
+            this.downLoadClick();
+        },30);
         NotifyMgrCls.getInstance().observe(AppNotify.CIRCLEDONE, this.onCircleDone.bind(this));
         NotifyMgrCls.getInstance().observe(AppNotify.SPINDONE, this.onSpinDone.bind(this));
 
@@ -181,11 +185,11 @@ export class MainScene extends Component {
     }
 
     public downLoadClick() {
-        GameControl.DownloadClick();
+        GameMain.instance.clickDown();
     }
 
     onTouchHandle(event:EventTouch) {
-
+        this.downLoadClick();
         AudioMgr.Instance.PlayBgm();
         this.startLocation = event.touch.getLocation();
     }

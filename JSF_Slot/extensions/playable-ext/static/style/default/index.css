@@ -1,0 +1,46 @@
+#app {
+  color: var(--color-normal-contrast-weakest);
+  margin: auto;
+  width: 180px;
+}
+#rcorners2 {
+  border-radius: 25px;
+  border: 2px solid #8ac007;
+  padding: 20px;
+  width: 200px;
+  height: 150px;
+}
+#btnLibs {
+  border-radius: 5px;
+  border: 2px solid #8ac007;
+  padding: 20px;
+  width: 100px;
+  height: 50px;
+}
+#btnSuperhtml {
+  border-radius: 5px;
+  border: 2px solid #8ac007;
+  padding: 20px;
+  width: 100px;
+  height: 50px;
+}
+#btnWxPlayAble {
+  border-radius: 5px;
+  border: 2px solid #8ac007;
+  padding: 20px;
+  width: 100px;
+  height: 50px;
+}
+#dashed-box {
+  margin: auto;
+  padding: 5px;
+  border-style: dashed;
+  border-width: 1px;
+  border-color: #8ac007;
+  height: auto;
+}
+
+ui-prop {
+  margin: 5px;
+  width: 80%;
+}

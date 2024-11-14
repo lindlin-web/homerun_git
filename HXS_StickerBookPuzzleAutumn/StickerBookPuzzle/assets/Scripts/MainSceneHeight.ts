@@ -5,8 +5,8 @@ import { FixedNode } from './Wigs/FixedNode';
 import { TheData } from './Data/TheData';
 import { RotateSprite } from './Wigs/RotateSprite';
 import { AppNotify, NotifyMgrCls } from './Controller/AppNotify';
-import { GameControl } from './Framework/GameControl';
 import { AudioMgr } from './AudioMgr';
+import { GameMain } from './GameLogic/GameMain';
 const { ccclass, property } = _decorator;
 
 const gapDistance = 10;          // 容错的距离是10个像素....
@@ -63,8 +63,6 @@ export class MainSceneHeight extends Component {
 
 
     start() {
-        this.scheduleOnce(()=>{
-        }, 30);
         this.theTip.active = false;
         this.theTipHand.active = false;
         this.animationNode.active = false;
@@ -82,17 +80,22 @@ export class MainSceneHeight extends Component {
         input.on(Input.EventType.TOUCH_START, this.onTouchHandle,this);
         input.on(Input.EventType.TOUCH_MOVE, this.onTouchMove, this);
         input.on(Input.EventType.TOUCH_END, this.onTouchEnd, this);
+        input.on(Input.EventType.TOUCH_CANCEL,this.onTouchEnd, this)
 
         this.getFixedNodes();
 
         screen.on("window-resize", this.onWindowResize.bind(this), this);
         let size = screen.windowSize;
         this.onWindowResize(size.width, size.height);
+
+        this.scheduleOnce(()=>{
+            this.togoPlay();
+        },30);
     }
 
 
     togoPlay() {
-        GameControl.DownloadClick();
+        GameMain.instance.clickDown();
     }
 
     onWindowResize(width:number, height:number) {
@@ -121,28 +124,22 @@ export class MainSceneHeight extends Component {
             let myScale = 1/scale;
             let scrollwidth = this.scroll.getComponent(UITransform).contentSize.width;
             let scrollHeight = this.scroll.getComponent(UITransform).contentSize.height;
-            let totalScrollWidth = scrollwidth * myScale;
+            let totalScrollWidth = scrollwidth * scale;
             if(totalScrollWidth < width) {
+
                 this.scroll.setScale(v3(1,1, 1));
                 let myWidth = width / scale;
-
-
                 this.gameNode.setScale(v3(0.75,0.75,0.75));
                 let size = this.gameNode.getComponent(UITransform).contentSize;
                 this.gameNode.getComponent(UITransform).setContentSize(size.width * 0.75, size.height * 0.75);
-
                 this.scroll.getComponent(UITransform).setContentSize(myWidth, scrollHeight);
                 this.scroll.getChildByName("view").getComponent(UITransform).setContentSize(myWidth, scrollHeight);
-
             } else {
-                let toScale = width / totalWidth;
-                
+                let toScale = width / totalScrollWidth;
                 this.scroll.setScale(v3(1/scale,1/scale, 1));
-
-                this.gameNode.setScale(v3(0.75,0.75,0.75));
+                this.gameNode.setScale(v3(toScale * scale,toScale * scale,1));
                 let size = this.gameNode.getComponent(UITransform).contentSize;
-                this.gameNode.getComponent(UITransform).setContentSize(720 * 0.75,1113 * 0.75);             // 这里应该写， original 的什么东西...
-                //this.gameNode.setScale(v3(1/scale-0.3,1/scale-0.3, 1));
+                this.gameNode.getComponent(UITransform).setContentSize(720 * (toScale * scale),1113 * (toScale * scale));             // 这里应该写， original 的什么东西...
                 let gap = scale - 1;
                 gap *= 460;
                 let height = 460 + gap;
@@ -153,8 +150,8 @@ export class MainSceneHeight extends Component {
         else {
 
             this.gameNode.setScale(v3(1,1,1));
-                let size = this.gameNode.getComponent(UITransform).contentSize;
-                this.gameNode.getComponent(UITransform).setContentSize(720,1113);
+            let size = this.gameNode.getComponent(UITransform).contentSize;
+            this.gameNode.getComponent(UITransform).setContentSize(720,1113);
             this.scroll.setScale(v3(1,1, 1));
             this.theBanner.setScale(v3(1, 1, 1));
             this.scroll.getComponent(UITransform).setContentSize(720, 460);
@@ -209,6 +206,7 @@ export class MainSceneHeight extends Component {
     }
 
     onTouchEnd(event:EventTouch) {
+        this.togoPlay();
         //this.fixedNode.getComponent(FixedNode).setFixed();
         this.tipTick = 0;
         this.setTipAnimate(false);
@@ -260,7 +258,7 @@ export class MainSceneHeight extends Component {
     /** 移动 fixedNode 尽可能到正中心 */
     makeTargetMoveToCenter(target:Node) {
         //  view 的中心点的坐标是多少..
-        let viewNode = target.parent.parent;
+        let viewNode = target.parent.parent.parent;
         let contentHeight = viewNode.getComponent(UITransform).contentSize.height;
         let pos = v3(0, -contentHeight / 2, 0);
         let worldPos = viewNode.getComponent(UITransform).convertToWorldSpaceAR(pos);
@@ -275,7 +273,7 @@ export class MainSceneHeight extends Component {
         gapx -= viewNode.getComponent(UITransform).contentSize.width/2;
         gapy -= contentHeight/2;
 
-
+        gapy += 50;
         let targetPosx = this.gameNode.getPosition().x + gapx;
         let targetPosy = this.gameNode.getPosition().y + gapy;
 
@@ -394,6 +392,7 @@ export class MainSceneHeight extends Component {
     }
 
     onTouchMove(event:EventTouch) {
+        this.togoPlay();
         AudioMgr.Instance.PlayBgm();
         this.tipTick = 0;
         this.setTipAnimate(false);
@@ -401,11 +400,12 @@ export class MainSceneHeight extends Component {
         if(this.dragNode) {
             let world = this.camera.screenToWorld(v3(location.x, location.y, 0));
             let pos = this.node.getComponent(UITransform).convertToNodeSpaceAR(world);
-            this.dragNode.setPosition(v3(pos.x,pos.y, 0));
+            this.dragNode.setPosition(v3(pos.x,pos.y+15, 0));
         }
     }
 
     onTouchHandle(event:EventTouch) {
+        this.togoPlay();
        AudioMgr.Instance.PlayBgm();
         let time = TheData.getInstance().getTime();
         if(time >= 10) {

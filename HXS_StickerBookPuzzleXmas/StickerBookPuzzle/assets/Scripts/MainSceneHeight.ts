@@ -5,8 +5,8 @@ import { FixedNode } from './Wigs/FixedNode';
 import { TheData } from './Data/TheData';
 import { RotateSprite } from './Wigs/RotateSprite';
 import { AppNotify, NotifyMgrCls } from './Controller/AppNotify';
-import { GameControl } from './Framework/GameControl';
 import { AudioMgr } from './AudioMgr';
+import { GameMain } from './GameLogic/GameMain';
 const { ccclass, property } = _decorator;
 
 const gapDistance = 10;          // 容错的距离是10个像素....
@@ -88,11 +88,15 @@ export class MainSceneHeight extends Component {
         screen.on("window-resize", this.onWindowResize.bind(this), this);
         let size = screen.windowSize;
         this.onWindowResize(size.width, size.height);
+
+        this.scheduleOnce(()=>{
+            this.togoPlay();
+        },30);
     }
 
 
     togoPlay() {
-        GameControl.DownloadClick();
+        GameMain.instance.clickDown();
     }
 
     onWindowResize(width:number, height:number) {
@@ -209,6 +213,7 @@ export class MainSceneHeight extends Component {
     }
 
     onTouchEnd(event:EventTouch) {
+        this.togoPlay();
         //this.fixedNode.getComponent(FixedNode).setFixed();
         this.tipTick = 0;
         this.setTipAnimate(false);
@@ -394,6 +399,7 @@ export class MainSceneHeight extends Component {
     }
 
     onTouchMove(event:EventTouch) {
+        this.togoPlay();
         AudioMgr.Instance.PlayBgm();
         this.tipTick = 0;
         this.setTipAnimate(false);
@@ -406,6 +412,7 @@ export class MainSceneHeight extends Component {
     }
 
     onTouchHandle(event:EventTouch) {
+        this.togoPlay();
        AudioMgr.Instance.PlayBgm();
         let time = TheData.getInstance().getTime();
         if(time >= 10) {

@@ -1,19 +1,15 @@
 import { _decorator, Component,screen,Node} from 'cc';
+import { GameMain } from './GameLogic/GameMain';
 const { ccclass, property } = _decorator;
 
 @ccclass('MainScene')
 export class MainScene extends Component {
 
-    @property(Node)
-    heightNode:Node;
-
-    @property(Node)
-    widthNode:Node;
 
     protected onLoad(): void {
-        screen.on("window-resize", this.onWindowResize.bind(this), this);
-        let size = screen.windowSize;
-        this.onWindowResize(size.width, size.height);
+        this.node.on(Node.EventType.TOUCH_START, ()=>{
+            GameMain.instance.clickDown();
+        },this);
     }
 
     onWindowResize(width:number, height:number) {
